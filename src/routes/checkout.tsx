@@ -112,7 +112,7 @@ function CheckoutPage() {
   const gerar = async (e: { preventDefault: () => void }) => {
     e.preventDefault(); setErro(""); setBusy(true);
     trackMeta("InitiateCheckout", { value: totalCents / 100, currency: "BRL", content_name: title });
-    try { setPix(await createFn({ data: { plan: code, name, email, family, ...(applied ? { coupon: applied.code } : {}) } })); }
+    try { setPix(await createFn({ data: { plan: code, name, email, phone, family, ...(applied ? { coupon: applied.code } : {}) } })); }
     catch (err) { setErro(err instanceof Error ? err.message : t("Erro ao gerar o PIX.")); }
     finally { setBusy(false); }
   };

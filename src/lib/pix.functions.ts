@@ -8,12 +8,13 @@ export const createPixPayment = createServerFn({ method: "POST" })
     plan: z.string().regex(/^cc_[a-z0-9_]+$/).max(40),
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().email().max(255),
+    phone: z.string().trim().max(20).optional(),
     family: z.enum(["claude", "openai", "combo"]).default("claude"),
     coupon: z.string().trim().max(40).optional(),
   }).parse(d))
   .handler(async ({ data }) => {
     const origin = (await import("./public-origin.server")).publicOrigin(getRequest().url);
-    return createPix(data.plan, data.name, data.email, origin, data.family, undefined, data.coupon || undefined);
+    return createPix(data.plan, data.name, data.email, origin, data.family, undefined, data.coupon || undefined, data.phone);
   });
 
 /** Confere um cupom para o checkout; o desconto real é recalculado ao gerar o PIX. */

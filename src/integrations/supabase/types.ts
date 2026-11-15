@@ -374,6 +374,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          phone: string | null
           company: string | null
           created_at: string
           email: string
@@ -387,6 +388,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          phone?: string | null
           company?: string | null
           created_at?: string
           email: string
@@ -400,6 +402,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          phone?: string | null
           company?: string | null
           created_at?: string
           email?: string
@@ -564,6 +567,7 @@ export type Database = {
       }
       payments: {
         Row: {
+          phone: string | null
           affiliate_id: string | null
           amount_cents: number
           api_key_id: string | null
@@ -588,6 +592,7 @@ export type Database = {
           upgrade_user_id: string | null
         }
         Insert: {
+          phone?: string | null
           affiliate_id?: string | null
           amount_cents: number
           api_key_id?: string | null
@@ -612,6 +617,7 @@ export type Database = {
           upgrade_user_id?: string | null
         }
         Update: {
+          phone?: string | null
           affiliate_id?: string | null
           amount_cents?: number
           api_key_id?: string | null

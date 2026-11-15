@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin/clientes")({
 
 type Key = { id: string; key_prefix: string | null; plano?: string | null; model_family?: string | null; status: string; token_limit: number | null; daily_token_limit: number | null; tokens_used: number; requests_count: number; expires_at: string | null; last_used_at: string | null; created_at: string };
 type Row = {
-  id: string; name: string; email: string; company: string | null; status: string; plan_id: string | null;
+  id: string; name: string; email: string; company: string | null; phone: string | null; status: string; plan_id: string | null;
   plans: { name: string } | null;
   api_keys: Key[];
 };
@@ -107,7 +107,7 @@ function Clientes() {
     queryKey: ["admin-clients"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients")
-        .select("id, name, email, company, status, plan_id, plans(name), api_keys(id, key_prefix, plano, model_family, status, token_limit, daily_token_limit, tokens_used, requests_count, expires_at, last_used_at, created_at)")
+        .select("id, name, email, company, phone, status, plan_id, plans(name), api_keys(id, key_prefix, plano, model_family, status, token_limit, daily_token_limit, tokens_used, requests_count, expires_at, last_used_at, created_at)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as Row[];
@@ -229,7 +229,7 @@ function Clientes() {
         {isLoading && <p className="text-sm text-muted-foreground">Carregando clientes…</p>}
         {!isLoading && !queryError && !keySearchPending && lista.length === 0 && <p className="rounded-md border border-border p-6 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</p>}
         {lista.map((r) => { const k = keyOf(r); return <article key={r.id} className="rounded-md border border-border bg-card p-4 sm:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3><Button variant="link" className="h-auto whitespace-normal p-0 text-left font-semibold text-foreground hover:text-accent" onClick={() => setVer(r)}>{r.name}</Button></h3><StatusBadge status={r.status} />{k && k.status !== "active" && <StatusBadge status={k.status} />}</div><p className="mt-1 text-xs text-muted-foreground">{r.email}{r.company ? ` · ${r.company}` : ""} · {r.plans?.name ?? "Sem plano"}</p></div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3><Button variant="link" className="h-auto whitespace-normal p-0 text-left font-semibold text-foreground hover:text-accent" onClick={() => setVer(r)}>{r.name}</Button></h3><StatusBadge status={r.status} />{k && k.status !== "active" && <StatusBadge status={k.status} />}</div><p className="mt-1 text-xs text-muted-foreground">{r.email}{r.company ? ` · ${r.company}` : ""} · {r.plans?.name ?? "Sem plano"}{r.phone && <> · <a className="text-accent underline-offset-2 hover:underline" href={`https://wa.me/55${r.phone}`} target="_blank" rel="noreferrer">WhatsApp {r.phone.replace(/^(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3")}</a></>}</p></div>
           <div className="flex flex-wrap gap-1">
             <Button size="sm" variant="outline" onClick={() => setVer(r)}>Ver uso</Button>
             <Button size="sm" variant="outline" onClick={() => setForm({ ...r, token_limit: k?.token_limit?.toString() ?? "", expires_at: k?.expires_at?.slice(0, 10) ?? "" })}>Editar</Button>

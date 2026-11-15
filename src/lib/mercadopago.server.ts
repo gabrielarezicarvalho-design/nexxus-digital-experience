@@ -65,9 +65,12 @@ export async function preparePayment(planCode: string, name: string, email: stri
   return { db, row: row as { id: string }, plan, price, family, offer, method };
 }
 
-export async function createPix(planCode: string, name: string, email: string, origin: string, family: ModelFamily = "claude", upgrade?: Upgrade, couponCode?: string) {
+export async function createPix(planCode: string, name: string, email: string, origin: string, family: ModelFamily = "claude", upgrade?: Upgrade, couponCode?: string, phone?: string) {
   const prep = await preparePayment(planCode, name, email, family, upgrade, "pix", couponCode);
   const { db, row, plan, price, offer } = prep; family = prep.family;
+  // WhatsApp do checkout: guardado só com dígitos (10 ou 11), para o admin falar com o cliente.
+  const phoneDigits = (phone ?? "").replace(/\D/g, "");
+  if (phoneDigits.length >= 10 && phoneDigits.length <= 11) await db.from("payments").update({ phone: phoneDigits }).eq("id", row.id);
   const [first, ...rest] = name.trim().split(/\s+/);
   const res = await fetch(MP, {
     method: "POST",
@@ -166,9 +169,11 @@ export async function fulfillApprovedPayment(pay: any, actor: string) {
 
   const { data: currentPlan } = await db.from("plans").select("*").eq("code", pay.plan_code).single();
   const plan = pay.plan_snapshot ?? currentPlan;
-  let { data: client } = await db.from("clients").select("id").ilike("email", pay.email).maybeSingle();
+  let { data: client } = await db.from("clients").select("id, phone").ilike("email", pay.email).maybeSingle();
   if (!client) {
-    client = (await db.from("clients").insert({ name: pay.name, email: pay.email, plan_id: plan.id, status: "active" }).select("id").single()).data;
+    client = (await db.from("clients").insert({ name: pay.name, email: pay.email, plan_id: plan.id, status: "active", phone: pay.phone ?? null }).select("id, phone").single()).data;
+  } else if (pay.phone && !client.phone) {
+    await db.from("clients").update({ phone: pay.phone }).eq("id", client.id);
   }
   const key = newApiKey();
   const { data: k } = await db.from("api_keys").insert({
