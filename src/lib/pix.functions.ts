@@ -12,7 +12,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     coupon: z.string().trim().max(40).optional(),
   }).parse(d))
   .handler(async ({ data }) => {
-    const origin = new URL(getRequest().url).origin;
+    const origin = (await import("./public-origin.server")).publicOrigin(getRequest().url);
     return createPix(data.plan, data.name, data.email, origin, data.family, undefined, data.coupon || undefined);
   });
 

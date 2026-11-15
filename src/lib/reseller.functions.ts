@@ -136,7 +136,7 @@ export const resellerPayPix = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const r = await myReseller(context.supabase, context.userId);
     if (!r) throw new Error("Você não é revendedor.");
-    return createPayoutPix(r.id, new URL(getRequest().url).origin, data?.full === true, data?.topup_cents ?? 0);
+    return createPayoutPix(r.id, (await import("./public-origin.server")).publicOrigin(getRequest().url), data?.full === true, data?.topup_cents ?? 0);
   });
 
 export const resellerCheckPix = createServerFn({ method: "POST" })

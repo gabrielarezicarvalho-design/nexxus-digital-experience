@@ -31,7 +31,7 @@ export const createTokenUpgradePix = createServerFn({ method: 'POST' })
     if (catalog.error || !catalog.data || !isUpgradePackage(catalog.data)) throw new Error('Pacote indisponível para recarga.');
     const { createPix } = await import('./mercadopago.server');
     const profile = await context.supabase.from('profiles').select('display_name').eq('id', context.userId).maybeSingle();
-    return createPix(data.plan, profile.data?.display_name || 'Cliente NEXA', user.email, new URL(getRequest().url).origin, asFamily(key.model_family), { keyId: key.id, userId: context.userId, clientId: key.client_id, tokens: Number(catalog.data.token_limit), price: familyPriceCents(asFamily(key.model_family), catalog.data.price_cents) });
+    return createPix(data.plan, profile.data?.display_name || 'Cliente NEXA', user.email, (await import("./public-origin.server")).publicOrigin(getRequest().url), asFamily(key.model_family), { keyId: key.id, userId: context.userId, clientId: key.client_id, tokens: Number(catalog.data.token_limit), price: familyPriceCents(asFamily(key.model_family), catalog.data.price_cents) });
   });
 
 export const checkTokenUpgradePix = createServerFn({ method: 'POST' })
