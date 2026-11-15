@@ -24,7 +24,14 @@ export function devhubComboModels(account: { name: string; available_models?: st
   return [...same, ...list.filter((m) => !same.includes(m))];
 }
 
-/** GPT and other families come only from Anthropic Revenda; the DevHub joins the common line only for Claude. */
+// 9Router (Anthropic Revenda) is only the reserve for families the DevHub does not sell (GPT, Gemini…).
+// Gabriel, 15/11/2026: Claude never falls back to it, so a Claude request is never answered by another model.
+export const NON_CLAUDE_RESERVE_PROVIDER = "Anthropic Revenda";
+
+/** Claude goes only to the DevHub; GPT and other families go only to the 9Router reserve. */
 export function devhubServesInCommonLine(account: { name: string }, model: string): boolean {
-  return account.name !== DEVHUB_PROVIDER || /^claude-/i.test(model.trim());
+  const claude = /^claude-/i.test(model.trim());
+  if (account.name === DEVHUB_PROVIDER) return claude;
+  if (account.name === NON_CLAUDE_RESERVE_PROVIDER) return !claude;
+  return true;
 }

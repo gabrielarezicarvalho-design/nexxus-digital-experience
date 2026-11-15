@@ -9,7 +9,9 @@ for (const combo of available_models) {
   test(`routes ${model} through the selected ${combo} combo`, () => {
     expect(anthropicRevendaCombo(account, model)).toBe(combo);
     expect(forcedHop(account, model).upstreamModel).toBe(combo);
-    expect(globalProviderHops([account], model)[0]?.upstreamModel).toBe(combo);
+    // 15/11/2026: na rota comum a 9Router só atende o que não é Claude (GPT, Gemini).
+    if (/^claude-/.test(combo)) expect(globalProviderHops([account], model)[0]).toBeUndefined();
+    else expect(globalProviderHops([account], model)[0]?.upstreamModel).toBe(combo);
     expect(versionedClaudeHops(account, [account], model, 'old-id')[0]?.upstreamModel).toBe(combo);
     const owner = { ...account, name: 'Nexxus Pro' };
     expect(versionedClaudeHops(owner, [owner, account], model, model)[1]?.upstreamModel).toBe(combo);
@@ -25,7 +27,7 @@ test('approved Fable 5.2 uses the exact Anthropic combo in catalog and all route
   for (const model of ['claude-fable-5-2', 'claude-fable-5.2']) {
     expect(anthropicRevendaCombo(updated, model)).toBe('claude-fable-5-2');
     expect(forcedHop(updated, model).upstreamModel).toBe('claude-fable-5-2');
-    expect(globalProviderHops([updated], model)[0]?.upstreamModel).toBe('claude-fable-5-2');
+    expect(globalProviderHops([updated], model)[0]).toBeUndefined(); // 15/11/2026: Claude não cai na 9Router na rota comum
     expect(versionedClaudeHops(updated, [updated], model, model)[0]?.upstreamModel).toBe('claude-fable-5-2');
   }
   expect(anthropicRevendaCombo(account, 'claude-fable-5-2')).toBeNull();
@@ -48,7 +50,7 @@ test('Haiku 4.5 uses the Anthropic Revenda Haiku combo, preferring a dedicated 4
   for (const model of ['claude-haiku-4-5', 'claude-haiku-4.5', 'claude-haiku-4-5-20251001']) {
     expect(anthropicRevendaCombo(account, model)).toBe('claude-haiku-5-5');
     expect(forcedHop(account, model).upstreamModel).toBe('claude-haiku-5-5');
-    expect(globalProviderHops([account], model)[0]?.upstreamModel).toBe('claude-haiku-5-5');
+    expect(globalProviderHops([account], model)[0]).toBeUndefined(); // 15/11/2026: Claude não cai na 9Router na rota comum
   }
   const withOwn = { ...account, available_models: [...available_models, 'claude-haiku-4-5'] };
   expect(anthropicRevendaCombo(withOwn, 'claude-haiku-4-5')).toBe('claude-haiku-4-5');
@@ -60,7 +62,7 @@ test('Haiku 4.5 uses the Anthropic Revenda Haiku combo, preferring a dedicated 4
 test('Claude Code Sonnet/Opus 4.x defaults use the Sonnet/Opus 5.5 combos', () => {
   for (const model of ['claude-sonnet-4-6', 'claude-sonnet-4.6', 'claude-sonnet-4-5-20250929', 'claude-sonnet-4']) {
     expect(anthropicRevendaCombo(account, model)).toBe('claude-sonnet-5-5');
-    expect(globalProviderHops([account], model)[0]?.upstreamModel).toBe('claude-sonnet-5-5');
+    expect(globalProviderHops([account], model)[0]).toBeUndefined(); // 15/11/2026: Claude não cai na 9Router na rota comum
   }
   for (const model of ['claude-opus-4-6', 'claude-opus-4-7', 'claude-opus-4-9', 'claude-opus-4-1-20250805']) {
     expect(anthropicRevendaCombo(account, model)).toBe('claude-opus-5-5');

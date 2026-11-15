@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { DEVHUB_COMBOS, devhubComboModels } from './devhub-combos';
+import { DEVHUB_COMBOS, devhubComboModels, devhubServesInCommonLine } from './devhub-combos';
 import { expandDevhubCombos, globalProviderHops } from './upstream.server';
 
 const devhubModels = ['devhub-chat', 'gemma-2-2b', 'claude-opus-5.5', 'claude-sonnet-5.5', 'claude-opus-4.8', 'claude-fable-5.1', 'claude-fable-5.2', 'gpt-6'];
@@ -33,7 +33,7 @@ test('non-combo models and other providers are untouched', () => {
 test('a DevHub combo expands into one hop per model, other providers stay one hop', () => {
   const hops = expandDevhubCombos(globalProviderHops([devhub, anthropic], 'claude-opus-5-5'), 'claude-opus-5-5');
   expect(hops.filter(h => h.account.name === 'DevHub Brasil').length).toBe(claudeOnly.length);
-  expect(hops.filter(h => h.account.name === 'Anthropic Revenda').map(h => h.upstreamModel)).toEqual(['claude-opus-5-5']);
+  expect(hops.filter(h => h.account.name === 'Anthropic Revenda')).toEqual([]); // Claude só na DevHub
 });
 
 test('GPT never goes to the DevHub in the common line; Claude does', () => {
@@ -41,4 +41,14 @@ test('GPT never goes to the DevHub in the common line; Claude does', () => {
   expect(globalProviderHops([open, anthropic], 'gpt-6-sol').map(h => h.account.name)).toEqual(['Anthropic Revenda']);
   expect(globalProviderHops([open, anthropic], 'claude-sonnet-5-5')[0]?.account.name).toBe('DevHub Brasil');
   expect(globalProviderHops([open, anthropic], 'claude-opus-5-5')[0]?.account.name).toBe('DevHub Brasil');
+});
+
+test("Claude only goes to the DevHub; GPT and Gemini only to the 9Router reserve", () => {
+  const devhub = { name: "DevHub Brasil" };
+  const revenda = { name: "Anthropic Revenda" };
+  expect(devhubServesInCommonLine(devhub, "claude-opus-5-5")).toBe(true);
+  expect(devhubServesInCommonLine(revenda, "claude-opus-5-5")).toBe(false);
+  expect(devhubServesInCommonLine(devhub, "gpt-6-sol")).toBe(false);
+  expect(devhubServesInCommonLine(revenda, "gpt-6-sol")).toBe(true);
+  expect(devhubServesInCommonLine(revenda, "gemini-4-argon")).toBe(true);
 });
