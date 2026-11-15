@@ -93,7 +93,20 @@ function Dashboard() {
     },
     refetchInterval: 30000,
   });
-  const hours = summary?.hours ?? [];
+  // Histórico de tokens do site antigo (cloudnexapro.site), por hora, somado aos números do site novo.
+  const { data: legacy = [] } = useQuery({
+    queryKey: ["admin-legacy-usage", start.toISOString()],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("legacy_usage_hourly").select("hour, tokens").gte("hour", start.toISOString());
+      if (error) return [];
+      return (data ?? []) as { hour: string; tokens: number }[];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  const hours = useMemo(() => [
+    ...(summary?.hours ?? []),
+    ...legacy.map((l) => ({ hour: l.hour, requests: 0, errors: 0, tokens: Number(l.tokens) })),
+  ], [summary, legacy]);
 
   const timeline = useMemo(() => {
     const slots = new Map<string, { label: string; requests: number; errors: number; tokens: number }>();
