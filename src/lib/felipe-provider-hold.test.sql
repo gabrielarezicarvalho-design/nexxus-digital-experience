@@ -1,0 +1,5 @@
+select
+  exists(select 1 from public.clients where id = 'd64a0884-c49e-4fcf-bee2-b31a647f3a2b' and email = 'fpaschoali@gmail.com' and status = 'active') as felipe_reactivated,
+  exists(select 1 from public.clients where id = '3d529221-3658-49da-ba5b-8fd7e65b0d23' and email = 'eng.filipecaixeta@gmail.com' and status = 'active') as filipe_caixeta_reactivated,
+  exists(select 1 from public.api_keys where id = '8c9107f0-13da-4e52-a025-c0bdd5ef4442' and client_id = 'd64a0884-c49e-4fcf-bee2-b31a647f3a2b' and status = 'active' and token_limit is null and expires_at = '2026-10-25 23:45:00.563+00') as felipe_key_preserved,
+  exists(select 1 from public.api_keys where id = 'ad36f774-89e9-42cd-8e30-7e1e2d4b069e' and client_id = '3d529221-3658-49da-ba5b-8fd7e65b0d23' and status = 'active' and token_limit is null and expires_at = '2026-10-25 21:08:06.296+00') as filipe_key_preserved;
