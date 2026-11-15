@@ -34,8 +34,7 @@ export interface ChatCompletionsAdapter {
 export async function handleChatCompletions(request: Request, adapter?: ChatCompletionsAdapter): Promise<Response> {
   const started = Date.now();
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const master = process.env["CODECRAFT_API_KEY"];
-  if (!master) return err(500, "Servidor sem credencial configurada", "server_error");
+  // VPS: o gate antigo exigia CODECRAFT_API_KEY mesmo sem esse fornecedor; cada fornecedor ativo valida a própria chave.
 
   const auth = request.headers.get("authorization") || (adapter?.acceptsApiKeyHeader ? request.headers.get('x-api-key') : '') || '';
   const token = auth.replace(/^Bearer\s+/i, "").trim();

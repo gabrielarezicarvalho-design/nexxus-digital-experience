@@ -119,8 +119,7 @@ export const Route = createFileRoute("/api/public/v1/messages")({
       POST: async ({ request }) => {
         const started = Date.now();
         const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-        const master = process.env["CODECRAFT_API_KEY"];
-        if (!master) return aerr(500, "Servidor sem credencial configurada", "api_error");
+  // VPS: o gate antigo exigia CODECRAFT_API_KEY mesmo sem esse fornecedor; cada fornecedor ativo valida a própria chave.
 
         const token = (request.headers.get("x-api-key") ?? request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "").trim();
         if (!token) return aerr(401, "API key ausente", "authentication_error");
