@@ -14,8 +14,18 @@ const CONNECTOR_BASES: Record<string, { gateway: string; secret: string; label: 
 
 const connectorFor = (baseUrl: string) => CONNECTOR_BASES[baseUrl.replace(/\/+$/, "")];
 
+// Self-hosted (VPS) mode: call supplier origins directly with the real supplier key stored under the same
+// secret name (UDC_*), instead of going through the Lovable connector gateway.
+const directProviders = () => process.env["NEXA_DIRECT_PROVIDERS"] === "1";
+// Direct origins whose connector route added a version path the saved base lacks.
+const DIRECT_BASES: Record<string, string> = {
+  "https://api.nexxus-pro.site": "https://api.nexxus-pro.site/v1",
+};
+
 export function providerRequestBase(baseUrl: string): string {
-  return connectorFor(baseUrl)?.gateway ?? baseUrl.replace(/\/+$/, "");
+  const clean = baseUrl.replace(/\/+$/, "");
+  if (directProviders()) return DIRECT_BASES[clean] ?? clean;
+  return connectorFor(clean)?.gateway ?? clean;
 }
 
 // Chat endpoint per supplier; defaults to the OpenAI-compatible /chat/completions.
@@ -33,6 +43,7 @@ export function providerProxyHeaders(baseUrl: string, token = process.env["NEXA_
   gatewayKey: process.env["LOVABLE_API_KEY"], connectionKey: process.env[connectorFor(baseUrl)?.secret ?? "UDC_INVISION_API_KEY"],
 }): Record<string, string> {
   const match = connectorFor(baseUrl);
+  if (match && directProviders()) return {};
   if (match) {
     if (!connector.gatewayKey || !connector.connectionKey) throw new Error(`Conexão ${match.label} não configurada.`);
     return { Authorization: `Bearer ${connector.gatewayKey}`, "X-Connection-Api-Key": connector.connectionKey };

@@ -72,31 +72,39 @@ export const Route = createFileRoute("/api/opencode-chat")({
     handlers: {
       POST: async ({ request }) => {
         if (!(await signedInUser(request))) return Response.json({ error: "Entre na sua conta para usar o assistente." }, { status: 401 });
-        const apiKey = process.env["LOVABLE_API_KEY"];
+        // VPS: ASSISTANT_BASE_URL/ASSISTANT_API_KEY point at our own gateway (OpenAI-compatible); otherwise Lovable AI.
+        const ownBase = process.env["ASSISTANT_BASE_URL"];
+        const apiKey = ownBase ? process.env["ASSISTANT_API_KEY"] : process.env["LOVABLE_API_KEY"];
         if (!apiKey) return new Response("Assistente não configurado.", { status: 500 });
         const body = (await request.json().catch(() => null)) as { messages?: unknown } | null;
         const messages = safeMessages(body?.messages);
         if (!messages) return Response.json({ error: "Pergunta inválida ou longa demais." }, { status: 400 });
-        const provider = createOpenAI({
-          baseURL: "https://ai.gateway.lovable.dev/v1",
-          apiKey,
-          headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-        });
-        const result = streamText({
-          model: provider.responses("openai/gpt-6-astra"),
-          system: SYSTEM,
-          messages: await convertToModelMessages(messages),
-          abortSignal: request.signal,
-          providerOptions: {
-            openai: {
-              forceReasoning: true,
-              reasoningEffort: "low",
-              reasoningSummary: "auto",
-              store: false,
-              include: ["reasoning.encrypted_content"],
-            },
-          },
-        });
+        const result = ownBase
+          ? streamText({
+              model: createOpenAI({ baseURL: ownBase, apiKey }).chat(process.env["ASSISTANT_MODEL"] || "claude-sonnet-5-5"),
+              system: SYSTEM,
+              messages: await convertToModelMessages(messages),
+              abortSignal: request.signal,
+            })
+          : streamText({
+              model: createOpenAI({
+                baseURL: "https://ai.gateway.lovable.dev/v1",
+                apiKey,
+                headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+              }).responses("openai/gpt-6-astra"),
+              system: SYSTEM,
+              messages: await convertToModelMessages(messages),
+              abortSignal: request.signal,
+              providerOptions: {
+                openai: {
+                  forceReasoning: true,
+                  reasoningEffort: "low",
+                  reasoningSummary: "auto",
+                  store: false,
+                  include: ["reasoning.encrypted_content"],
+                },
+              },
+            });
         return result.toUIMessageStreamResponse({
           onError: (e) => {
             const msg = String((e as Error)?.message ?? e);

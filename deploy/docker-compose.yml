@@ -1,0 +1,34 @@
+# Site + gateway NEXA. O Supabase próprio roda no compose oficial dele (pasta ~/supabase/docker),
+# e os dois se falam pela rede "supabase_default".
+services:
+  nexa:
+    build:
+      context: ..
+      args:
+        VITE_SUPABASE_URL: ${PUBLIC_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+    container_name: nexa
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # O servidor fala com o Supabase pela rede interna (mais rápido); o navegador usa o endereço público.
+      SUPABASE_URL: http://kong:8000
+      NEXA_DIRECT_PROVIDERS: "1"
+    ports:
+      - "127.0.0.1:3100:3000"
+    networks: [supabase_default]
+
+  # Substitui a agenda da Lovable: chama o monitor de status a cada minuto.
+  nexa-cron:
+    image: curlimages/curl:latest
+    container_name: nexa-cron
+    restart: unless-stopped
+    environment:
+      LOVABLE_CRON_SECRET: ${LOVABLE_CRON_SECRET}
+    entrypoint: ["/bin/sh", "-c", "while true; do curl -s -o /dev/null -X POST -H \"Authorization: Bearer $$LOVABLE_CRON_SECRET\" http://nexa:3000/api/public/health; sleep 60; done"]
+    depends_on: [nexa]
+    networks: [supabase_default]
+
+networks:
+  supabase_default:
+    external: true

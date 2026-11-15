@@ -125,3 +125,17 @@ test("Free AI uses its connector and the /chat/ endpoint for external models", (
   expect(providerChatUrl("https://api.free.ai/v1")).toBe("https://connector-gateway.lovable.dev/udc_free_ai/chat/");
   expect(providerChatUrl("https://api.provider.example/v1")).toBe("https://api.provider.example/v1/chat/completions");
 });
+
+test("VPS direct mode calls supplier origins with their own key, never the connector", () => {
+  const previous = process.env["NEXA_DIRECT_PROVIDERS"];
+  process.env["NEXA_DIRECT_PROVIDERS"] = "1";
+  try {
+    expect(providerRequestBase("https://api.nexxus-pro.site")).toBe("https://api.nexxus-pro.site/v1");
+    expect(providerChatUrl("https://api.ialauren.com/v1/")).toBe("https://api.ialauren.com/v1/chat/completions");
+    expect(providerChatUrl("https://api.free.ai/v1")).toBe("https://api.free.ai/v1/chat/");
+    expect(providerProxyHeaders("https://invision.dreamvision.com.br/v1")).toEqual({});
+  } finally {
+    if (previous === undefined) delete process.env["NEXA_DIRECT_PROVIDERS"];
+    else process.env["NEXA_DIRECT_PROVIDERS"] = previous;
+  }
+});
