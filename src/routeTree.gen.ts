@@ -47,7 +47,6 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago-webhook'
 import { Route as ApiPublicPulseUsageRouteImport } from './routes/api/public/pulse-usage'
 import { Route as ApiPublicSiteViewRouteImport } from './routes/api/public/site-view'
-import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicV1MessagesRouteImport } from './routes/api/public/v1/messages'
 import { Route as ApiPublicV1ModelsRouteImport } from './routes/api/public/v1/models'
 import { Route as ApiPublicV1ResponsesRouteImport } from './routes/api/public/v1/responses'
@@ -248,12 +247,6 @@ const ApiPublicSiteViewRoute = ApiPublicSiteViewRouteImport.update({
   path: '/api/public/site-view',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPaymentsWebhookRoute =
-  ApiPublicPaymentsWebhookRouteImport.update({
-    id: '/api/public/payments/webhook',
-    path: '/api/public/payments/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicV1MessagesRoute = ApiPublicV1MessagesRouteImport.update({
   id: '/api/public/v1/messages',
   path: '/api/public/v1/messages',
@@ -332,7 +325,6 @@ export interface FileRoutesByFullPath {
   '/api/public/mercadopago-webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/api/public/pulse-usage': typeof ApiPublicPulseUsageRoute
   '/api/public/site-view': typeof ApiPublicSiteViewRoute
-  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/v1/messages': typeof ApiPublicV1MessagesRouteWithChildren
   '/api/public/v1/models': typeof ApiPublicV1ModelsRoute
   '/api/public/v1/responses': typeof ApiPublicV1ResponsesRoute
@@ -379,7 +371,6 @@ export interface FileRoutesByTo {
   '/api/public/mercadopago-webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/api/public/pulse-usage': typeof ApiPublicPulseUsageRoute
   '/api/public/site-view': typeof ApiPublicSiteViewRoute
-  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/v1/messages': typeof ApiPublicV1MessagesRouteWithChildren
   '/api/public/v1/models': typeof ApiPublicV1ModelsRoute
   '/api/public/v1/responses': typeof ApiPublicV1ResponsesRoute
@@ -428,7 +419,6 @@ export interface FileRoutesById {
   '/api/public/mercadopago-webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/api/public/pulse-usage': typeof ApiPublicPulseUsageRoute
   '/api/public/site-view': typeof ApiPublicSiteViewRoute
-  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/v1/messages': typeof ApiPublicV1MessagesRouteWithChildren
   '/api/public/v1/models': typeof ApiPublicV1ModelsRoute
   '/api/public/v1/responses': typeof ApiPublicV1ResponsesRoute
@@ -478,7 +468,6 @@ export interface FileRouteTypes {
     | '/api/public/mercadopago-webhook'
     | '/api/public/pulse-usage'
     | '/api/public/site-view'
-    | '/api/public/payments/webhook'
     | '/api/public/v1/messages'
     | '/api/public/v1/models'
     | '/api/public/v1/responses'
@@ -525,7 +514,6 @@ export interface FileRouteTypes {
     | '/api/public/mercadopago-webhook'
     | '/api/public/pulse-usage'
     | '/api/public/site-view'
-    | '/api/public/payments/webhook'
     | '/api/public/v1/messages'
     | '/api/public/v1/models'
     | '/api/public/v1/responses'
@@ -573,7 +561,6 @@ export interface FileRouteTypes {
     | '/api/public/mercadopago-webhook'
     | '/api/public/pulse-usage'
     | '/api/public/site-view'
-    | '/api/public/payments/webhook'
     | '/api/public/v1/messages'
     | '/api/public/v1/models'
     | '/api/public/v1/responses'
@@ -606,7 +593,6 @@ export interface RootRouteChildren {
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
   ApiPublicPulseUsageRoute: typeof ApiPublicPulseUsageRoute
   ApiPublicSiteViewRoute: typeof ApiPublicSiteViewRoute
-  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicV1MessagesRoute: typeof ApiPublicV1MessagesRouteWithChildren
   ApiPublicV1ModelsRoute: typeof ApiPublicV1ModelsRoute
   ApiPublicV1ResponsesRoute: typeof ApiPublicV1ResponsesRoute
@@ -882,13 +868,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSiteViewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/payments/webhook': {
-      id: '/api/public/payments/webhook'
-      path: '/api/public/payments/webhook'
-      fullPath: '/api/public/payments/webhook'
-      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/v1/messages': {
       id: '/api/public/v1/messages'
       path: '/api/public/v1/messages'
@@ -1029,7 +1008,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
   ApiPublicPulseUsageRoute: ApiPublicPulseUsageRoute,
   ApiPublicSiteViewRoute: ApiPublicSiteViewRoute,
-  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicV1MessagesRoute: ApiPublicV1MessagesRouteWithChildren,
   ApiPublicV1ModelsRoute: ApiPublicV1ModelsRoute,
   ApiPublicV1ResponsesRoute: ApiPublicV1ResponsesRoute,

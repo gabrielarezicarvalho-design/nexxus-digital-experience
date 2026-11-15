@@ -40,11 +40,6 @@ export const Route = createFileRoute('/api/public/health')({
         });
         await supabaseAdmin.from('status_checks').delete().lt('checked_at', new Date(Date.now() - KEEP_DAYS * 864e5).toISOString());
 
-        try {
-          const { dispatchOutagePush } = await import('@/lib/push-dispatch.server');
-          await dispatchOutagePush();
-        } catch { console.error('Outage push monitor failed; gateway measurement preserved'); }
-
         return Response.json({ ok: dbOk && gatewayOk, dbOk, gatewayOk, latencyMs, checkedAt: new Date().toISOString() });
       },
     },
