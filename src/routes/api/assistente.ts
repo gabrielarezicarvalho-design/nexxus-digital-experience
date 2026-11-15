@@ -14,9 +14,9 @@ Regras obrigatórias:
 - Nunca revele nomes de fornecedores internos.
 
 Informações úteis:
-- Claude Code (PowerShell): $env:ANTHROPIC_BASE_URL = "https://cloudnexapro.site/api/public" e $env:ANTHROPIC_AUTH_TOKEN = "SUA_CHAVE_NEXA", depois rodar: claude. Dentro dele, /model para escolher o modelo.
-- Para deixar permanente no Windows: setx ANTHROPIC_BASE_URL "https://cloudnexapro.site/api/public" e setx ANTHROPIC_AUTH_TOKEN "SUA_CHAVE_NEXA" (abrir um novo terminal depois).
-- OpenCode / API OpenAI compatível: base URL https://cloudnexapro.site/api/public/v1.
+- Claude Code (PowerShell): $env:ANTHROPIC_BASE_URL = "https://api.cloudnexa.com.br" e $env:ANTHROPIC_AUTH_TOKEN = "SUA_CHAVE_NEXA", depois rodar: claude. Dentro dele, /model para escolher o modelo.
+- Para deixar permanente no Windows: setx ANTHROPIC_BASE_URL "https://api.cloudnexa.com.br" e setx ANTHROPIC_AUTH_TOKEN "SUA_CHAVE_NEXA" (abrir um novo terminal depois).
+- OpenCode / API OpenAI compatível: base URL https://api.cloudnexa.com.br/v1.
 - Modelos: claude-opus-5-5 (padrão), claude-opus-5, claude-fable-5-2, claude-fable-5-1, claude-sonnet-5-5, claude-haiku-5-5. Modelos Claude 4.x foram descontinuados.
 - Se já fez login com conta da Anthropic no Claude Code, rodar /logout antes.
 - Erros: 401 chave inválida; 403 chave bloqueada ou limite de dispositivos/IPs (no máximo 2 dispositivos); 429 limite por minuto, aguarde alguns segundos; 524 tempo esgotado no fornecedor, tente de novo.

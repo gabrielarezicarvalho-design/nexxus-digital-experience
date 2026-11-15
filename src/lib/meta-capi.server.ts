@@ -18,7 +18,7 @@ export async function sendMetaEvent(ev: {
         event_time: Math.floor(Date.now() / 1000),
         event_id: ev.eventId,
         action_source: "website",
-        event_source_url: ev.url ?? "https://cloudnexapro.site/",
+        event_source_url: ev.url ?? "https://cloudnexa.com.br/",
         user_data: ev.email ? { em: [await sha256(ev.email)] } : {},
         custom_data: { value: ev.value, currency: ev.currency ?? "BRL", content_name: ev.contentName },
       }],

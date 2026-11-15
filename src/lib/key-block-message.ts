@@ -1,4 +1,4 @@
-export const RESELLER_PAYMENT_BLOCK_MESSAGE = "Sua chave está bloqueada. Regularize sua chave no site oficial https://cloudnexapro.site para continuar usando.";
+export const RESELLER_PAYMENT_BLOCK_MESSAGE = "Sua chave está bloqueada. Regularize sua chave no site oficial https://cloudnexa.com.br para continuar usando.";
 
 /** Only payment-blocked reseller keys receive the regularization notice. */
 export function resellerPaymentBlockMessage(key: { status: string; reseller_blocked?: boolean | null }): string | null {

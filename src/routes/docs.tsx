@@ -17,8 +17,8 @@ export const Route = createFileRoute("/docs")({
 });
 
 const WHATSAPP = "https://chat.whatsapp.com/EVdOAcdCyRlBQKfA0PkK9O?s=cl&p=a&iam=2";
-const BASE_CLAUDE = "https://cloudnexapro.site/api/public";
-const BASE_OPENAI = "https://cloudnexapro.site/api/public/v1";
+const BASE_CLAUDE = "https://api.cloudnexa.com.br";
+const BASE_OPENAI = "https://api.cloudnexa.com.br/v1";
 
 type SnippetKey = "claude" | "opencode" | "api";
 const SNIPPETS: Record<SnippetKey, { label: string; code: string }> = {

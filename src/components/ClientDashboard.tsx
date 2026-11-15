@@ -34,7 +34,7 @@ import { DailyLimitCard } from '@/components/DailyLimitCard';
 import logoAsset from '@/assets/nexus/nexa-logo.png.asset.json';
 
 const logo = logoAsset.url;
-const BASE = 'https://cloudnexapro.site/api/public';
+const BASE = 'https://api.cloudnexa.com.br';
 const SUPPORT = 'https://chat.whatsapp.com/EVdOAcdCyRlBQKfA0PkK9O?s=cl&p=a&iam=2';
 const TABS = [{ id: 'painel', label: 'Visão geral', icon: Home }, { id: 'chaves', label: 'Chaves de API', icon: KeyRound }, { id: 'uso', label: 'Uso', icon: BarChart3 }, { id: 'modelos', label: 'Modelos', icon: Layers }, { id: 'plano', label: 'Seu plano', icon: Store }, { id: 'faturas', label: 'Faturamento', icon: CreditCard }, { id: 'api', label: 'Acesso à API', icon: Braces }, { id: 'conta', label: 'Configurações', icon: Settings }, { id: 'suporte', label: 'Suporte', icon: LifeBuoy }];
 const FATURA_STATUS: Record<string, string> = { approved: 'Aprovado', pending: 'Pendente', in_process: 'Em análise', rejected: 'Recusado', cancelled: 'Cancelado', error: 'Erro' };

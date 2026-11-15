@@ -43,7 +43,7 @@ export const GGMAX_DELIVERY_TEMPLATE = `🎥 Vídeo Tutorial: https://youtu.be/7
 
 ━━━━━━━━━━━━━━━━
 
-🌐 URL Base: https://cloudnexapro.site/api/public
+🌐 URL Base: https://api.cloudnexa.com.br
 
 🔑 API Key: {chave}
 

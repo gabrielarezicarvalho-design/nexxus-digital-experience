@@ -48,7 +48,7 @@ Passos (OpenCode):
       "npm": "@ai-sdk/openai-compatible",
       "name": "NEXA API",
       "options": {
-        "baseURL": "https://www.cloudnexapro.site/api/public/v1",
+        "baseURL": "https://api.cloudnexa.com.br/v1",
         "apiKey": "{env:NEXA_API_KEY}"
       },
       "models": { "claude-sonnet-5-5": { "name": "claude-sonnet-5-5" } }
@@ -62,7 +62,7 @@ Salvar e fechar o Bloco de Notas.
 Alternativa (Claude Code, terminal oficial da Anthropic, sem opencode.json):
 1. Entrar na pasta do projeto: cd "C:\\CAMINHO\\DO\\PROJETO"
 2. No PowerShell, apontar para a ponte da NEXA (SEM www):
-$env:ANTHROPIC_BASE_URL = "https://cloudnexapro.site/api/public"
+$env:ANTHROPIC_BASE_URL = "https://api.cloudnexa.com.br"
 3. Definir a chave: $env:ANTHROPIC_AUTH_TOKEN = "SUA_CHAVE_AQUI"
 4. Rodar: claude
 5. Dentro dele, rodar /model e escolher claude-sonnet-5. Usar na mesma janela do PowerShell em que definiu as variáveis.`;

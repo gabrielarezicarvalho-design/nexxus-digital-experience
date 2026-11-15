@@ -85,7 +85,7 @@ export function GatewayCompare() {
   </div></section>;
 }
 
-const base='https://cloudnexapro.site/api/public';
+const base='https://api.cloudnexa.com.br';
 export function GatewayAccessExplained() {
   const { t } = useLang();
   return <section className="gateway-band gateway-access" aria-labelledby="gateway-access-title"><div className="wide">

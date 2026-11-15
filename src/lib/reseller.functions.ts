@@ -149,7 +149,7 @@ export const resellerCheckPix = createServerFn({ method: "POST" })
   });
 
 // Domínio próprio do revendedor: verifica o CNAME via DNS-over-HTTPS (workerd-safe, sem Node dns)
-const CNAME_TARGET = "cloudnexapro.site";
+const CNAME_TARGET = "cloudnexa.com.br";
 const DOMAIN_RE = /^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
 const HOST_IP = "185.158.133.1";
@@ -158,7 +158,7 @@ async function dns(name: string, type: string) {
   if (!res.ok) return [];
   return (((await res.json()) as { Answer?: { type: number; data: string }[] }).Answer ?? []);
 }
-// Aceita CNAME para cloudnexapro.site (subdomínio) ou registro A para o IP da hospedagem (domínio raiz)
+// Aceita CNAME para cloudnexa.com.br (subdomínio) ou registro A para o IP da hospedagem (domínio raiz)
 async function checkCname(domain: string): Promise<boolean> {
   try {
     const cname = await dns(domain, "CNAME");
@@ -182,7 +182,7 @@ export const resellerSetCustomDomain = createServerFn({ method: "POST" })
       return { domain: null, status: "pending" };
     }
     if (!DOMAIN_RE.test(domain)) throw new Error("Domínio inválido. Use algo como api.sualoja.com");
-    if (domain === CNAME_TARGET || domain.endsWith(".cloudnexapro.site") || domain.endsWith(".nexapro.site")) throw new Error("Esse já é o endereço padrão da NEXA.");
+    if (domain === CNAME_TARGET || domain.endsWith(".cloudnexa.com.br") || domain === "cloudnexapro.site" || domain.endsWith(".cloudnexapro.site") || domain.endsWith(".nexapro.site")) throw new Error("Esse já é o endereço padrão da NEXA.");
     const { error } = await (await import("@/integrations/supabase/client.server")).supabaseAdmin.from("resellers").update({ custom_domain: domain, custom_domain_status: "pending" }).eq("id", r.id);
     if (error) throw new Error(error.code === "23505" ? "Esse domínio já está em uso por outra revenda." : error.message);
     const ok = await checkCname(domain);

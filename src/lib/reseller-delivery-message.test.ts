@@ -21,7 +21,7 @@ test("entrega padrão do JB mantém a base e consulta em apirevenda.site", () =>
 test("chave criada no admin para bruebielcasal@gmail.com recebe a mensagem ggmax com a chave nova", () => {
   const { adminDeliveryMessage } = require("./reseller-delivery-message");
   const m = adminDeliveryMessage("Bruebielcasal@gmail.com", "sk-nx-NOVA");
-  expect(m?.match(/URL Base: (\S+)/)?.[1]).toBe("https://cloudnexapro.site/api/public");
+  expect(m?.match(/URL Base: (\S+)/)?.[1]).toBe("https://api.cloudnexa.com.br");
   expect(m.includes("🔑 API Key: sk-nx-NOVA")).toBe(true);
   expect(m.includes("youtu.be/7DyTxYUXCrw")).toBe(true);
   expect(adminDeliveryMessage("outro@example.com", "sk-nx-NOVA")).toBe(null);

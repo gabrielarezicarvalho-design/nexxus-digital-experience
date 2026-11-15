@@ -7,7 +7,7 @@ export const Route = createFileRoute('/api/public/site-view')({
   server: { handlers: { POST: async ({ request }) => {
     const url = new URL(request.url);
     const origin = request.headers.get('origin');
-    const allowedHosts = ['cloudnexapro.site', 'www.cloudnexapro.site', 'nexaproclaude.lovable.app', 'id-preview--6953dca0-27e3-4b71-b549-07cb3f46f81a.lovable.app', 'localhost'];
+    const allowedHosts = ['cloudnexa.com.br', 'www.cloudnexa.com.br', 'cloudnexapro.site', 'www.cloudnexapro.site', 'nexaproclaude.lovable.app', 'id-preview--6953dca0-27e3-4b71-b549-07cb3f46f81a.lovable.app', 'localhost'];
     if (!origin || origin !== url.origin || !allowedHosts.includes(url.hostname) || request.headers.get('sec-fetch-site') === 'cross-site') return new Response(null, { status: 403 });
     if (Number(request.headers.get('content-length') ?? 0) > 1024) return new Response(null, { status: 413 });
     const text = await request.text();

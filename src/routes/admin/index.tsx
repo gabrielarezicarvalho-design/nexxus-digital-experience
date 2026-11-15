@@ -35,7 +35,7 @@ import { successRate } from '@/lib/success-rate';
 export const Route = createFileRoute("/admin/")({ head: () => pageHead('Dashboard administrativo', 'Métricas operacionais de pedidos, tokens e fornecedores NEXA CLOUD.'), component: Dashboard });
 
 const PERIODS = [{ k: "1", label: "24h" }, { k: "7", label: "7 dias" }, { k: "30", label: "30 dias" }] as const;
-const ROOT_URL = "https://cloudnexapro.site/api/public";
+const ROOT_URL = "https://api.cloudnexa.com.br";
 
 const sameLocalDay = (value: string | Date, other = new Date()) => {
   const date = new Date(value);

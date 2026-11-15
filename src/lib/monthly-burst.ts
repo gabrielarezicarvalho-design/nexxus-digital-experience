@@ -22,7 +22,7 @@ export function monthlyBurstMessage(plano: string | null | undefined, pausedUnti
   const time = brasiliaTime(pausedUntil);
   const next = plano ? NEXT_PLAN[plano] : undefined;
   return `Limite de ${amount} do plano ${plano ?? 'mensal'} atingido. Sua chave volta a funcionar ${time ? `às ${time} (horário de Brasília)` : 'em até 1 hora'}.`
-    + (next ? ` Para ter mais tokens por hora, faça upgrade para o plano ${next} em https://cloudnexapro.site.` : '');
+    + (next ? ` Para ter mais tokens por hora, faça upgrade para o plano ${next} em https://cloudnexa.com.br.` : '');
 }
 
 type BurstKey = { plano?: string | null; reseller_id?: string | null; burst_token_limit?: number | null; burst_window_minutes?: number | null; burst_pause_minutes?: number | null; burst_exempt?: boolean | null };

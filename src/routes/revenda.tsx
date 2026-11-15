@@ -197,7 +197,7 @@ function DominioProprio({ reseller: r, busy, run, copy, copied }: { reseller: R;
 
 1. Subdomínio (ex.: api.sualoja.com) — crie um CNAME:
    Nome:  ${domain && domain.split(".").length > 2 ? domain.split(".")[0] : "api"}
-   Valor: cloudnexapro.site
+   Valor: cloudnexa.com.br
 
    Domínio raiz (ex.: sualoja.com) — crie um registro A:
    Nome:  @

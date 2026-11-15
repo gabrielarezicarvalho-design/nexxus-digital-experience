@@ -28,7 +28,7 @@ export const connectedToolGuides: ConnectedTool[] = [
   { id: 'interpreter', name: 'Open Interpreter', x: 57.6, y: 94.2, size: 9, kind: 'general' },
 ];
 
-const base = 'https://cloudnexapro.site/api/public';
+const base = 'https://api.cloudnexa.com.br';
 export function connectedToolGuide(tool: ConnectedTool, windows: boolean, english: boolean) {
   const env = (name: string, value: string) => windows ? `$env:${name} = "${value}"` : `export ${name}="${value}"`;
   const key = 'sk-nx-SUA_CHAVE';

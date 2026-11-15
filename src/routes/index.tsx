@@ -59,7 +59,7 @@ cd "C:\\CAMINHO\\DO\\PROJETO"
       "npm": "@ai-sdk/openai-compatible",
       "name": "NEXA API",
       "options": {
-        "baseURL": "https://www.cloudnexapro.site/api/public/v1",
+        "baseURL": "https://api.cloudnexa.com.br/v1",
         "apiKey": "{env:NEXA_API_KEY}"
       },
       "models": {
@@ -78,7 +78,7 @@ OU PREFERE O CLAUDE CODE (terminal oficial)? Sem opencode.json:
 1. Entre na pasta do projeto:
 cd "C:\\CAMINHO\\DO\\PROJETO"
 2. No PowerShell, aponte para a ponte da NEXA:
-$env:ANTHROPIC_BASE_URL = "https://cloudnexapro.site/api/public"
+$env:ANTHROPIC_BASE_URL = "https://api.cloudnexa.com.br"
 3. Defina sua chave:
 $env:ANTHROPIC_AUTH_TOKEN = "SUA_CHAVE_AQUI"
 4. Rode: claude
@@ -100,7 +100,7 @@ cd ~/CAMINHO/DO/PROJETO
       "npm": "@ai-sdk/openai-compatible",
       "name": "NEXA API",
       "options": {
-        "baseURL": "https://www.cloudnexapro.site/api/public/v1",
+        "baseURL": "https://api.cloudnexa.com.br/v1",
         "apiKey": "{env:NEXA_API_KEY}"
       },
       "models": {
@@ -119,7 +119,7 @@ OU PREFERE O CLAUDE CODE (terminal oficial)? Sem opencode.json:
 1. Entre na pasta do projeto:
 cd ~/CAMINHO/DO/PROJETO
 2. No Terminal, aponte para a ponte da NEXA:
-export ANTHROPIC_BASE_URL="https://cloudnexapro.site/api/public"
+export ANTHROPIC_BASE_URL="https://api.cloudnexa.com.br"
 3. Defina sua chave:
 export ANTHROPIC_AUTH_TOKEN="SUA_CHAVE_AQUI"
 4. Rode: claude
@@ -127,7 +127,7 @@ export ANTHROPIC_AUTH_TOKEN="SUA_CHAVE_AQUI"
 };
 
 function JsonConfig() {
-  return <pre>{"{"}{"\n"}  "$schema": "https://opencode.ai/config.json",{"\n"}  "provider": {"{"}{"\n"}    "nexa": {"{"}{"\n"}      "npm": "@ai-sdk/openai-compatible",{"\n"}      "name": "NEXA API",{"\n"}      "options": {"{"}{"\n"}        "baseURL": "https://www.cloudnexapro.site/api/public/v1",{"\n"}        "apiKey": "{`{`}env:NEXA_API_KEY{"}"}"{"\n"}      {"}"},{"\n"}      "models": {"{"}{"\n"}        "claude-sonnet-5-5": {"{"}{"\n"}          "name": "claude-sonnet-5-5"{"\n"}        {"}"}{"\n"}      {"}"}{"\n"}    {"}"}{"\n"}  {"}"}{"\n"}{"}"}</pre>;
+  return <pre>{"{"}{"\n"}  "$schema": "https://opencode.ai/config.json",{"\n"}  "provider": {"{"}{"\n"}    "nexa": {"{"}{"\n"}      "npm": "@ai-sdk/openai-compatible",{"\n"}      "name": "NEXA API",{"\n"}      "options": {"{"}{"\n"}        "baseURL": "https://api.cloudnexa.com.br/v1",{"\n"}        "apiKey": "{`{`}env:NEXA_API_KEY{"}"}"{"\n"}      {"}"},{"\n"}      "models": {"{"}{"\n"}        "claude-sonnet-5-5": {"{"}{"\n"}          "name": "claude-sonnet-5-5"{"\n"}        {"}"}{"\n"}      {"}"}{"\n"}    {"}"}{"\n"}  {"}"}{"\n"}{"}"}</pre>;
 }
 
 function CopiarComandos({ so }: { so: "win" | "unix" }) {
@@ -166,7 +166,7 @@ function PassosWin() {
     <p>{t("5. Abra o OpenCode com")} <b>opencode</b>. {t("6. Dentro dele, rode")} <b>/models</b> {t("e selecione")} <b>NEXA API → claude-sonnet-5-5</b>. {t("Pronto, é só usar.")}</p>
     <hr />
     <p><b>{t("Ou use o Claude Code")}</b>{t(", o terminal oficial da Anthropic — sem opencode.json. No PowerShell, na pasta do projeto:")}</p>
-    <pre>$env:ANTHROPIC_BASE_URL = "https://cloudnexapro.site/api/public"</pre>
+    <pre>$env:ANTHROPIC_BASE_URL = "https://api.cloudnexa.com.br"</pre>
     <pre>$env:ANTHROPIC_AUTH_TOKEN = "SUA_CHAVE_AQUI"</pre>
     <pre>claude</pre>
     <p>{t("Dentro dele, rode")} <b>/model</b> {t("e escolha")} <b>claude-sonnet-5-5</b>. {t("Use sempre na mesma janela do PowerShell em que definiu as duas variáveis.")}</p>
@@ -187,7 +187,7 @@ function PassosUnix() {
     <p>{t("5. Abra o OpenCode com")} <b>opencode</b>. {t("6. Dentro dele, rode")} <b>/models</b> {t("e selecione")} <b>NEXA API → claude-sonnet-5-5</b>. {t("Pronto, é só usar.")}</p>
     <hr />
     <p><b>{t("Ou use o Claude Code")}</b>{t(", o terminal oficial da Anthropic — sem opencode.json. No Terminal, na pasta do projeto:")}</p>
-    <pre>export ANTHROPIC_BASE_URL="https://cloudnexapro.site/api/public"</pre>
+    <pre>export ANTHROPIC_BASE_URL="https://api.cloudnexa.com.br"</pre>
     <pre>export ANTHROPIC_AUTH_TOKEN="SUA_CHAVE_AQUI"</pre>
     <pre>claude</pre>
     <p>{t("Dentro dele, rode")} <b>/model</b> {t("e escolha")} <b>claude-sonnet-5-5</b>. {t("Use sempre na mesma janela do Terminal em que definiu as duas variáveis.")}</p>
