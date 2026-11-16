@@ -169,6 +169,31 @@ export const adminKeyIps = createServerFn({ method: "POST" })
     return result as unknown as { ip_limit: number; ips: { ip: string; requests: number; first_seen: string; last_seen: string }[] };
   });
 
+/** Altera quantos IPs distintos (7 dias) a chave pode usar. Se a chave estava bloqueada pelo limite de IP e agora cabe no novo limite, ela é reativada. */
+export const adminSetKeyIpLimit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ keyId: z.string().uuid(), ipLimit: z.number().int().min(1).max(1000) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { data: key, error } = await context.supabase.from("api_keys").update({ ip_limit: data.ipLimit })
+      .eq("id", data.keyId).select("id, status").maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!key) throw new Error("Chave não encontrada");
+    let reactivated = false;
+    if (key.status === "blocked") {
+      const [{ data: count }, { data: ipBlock }] = await Promise.all([
+        context.supabase.rpc("key_ip_count", { _key_id: data.keyId }),
+        context.supabase.from("request_logs").select("id").eq("api_key_id", data.keyId).like("error", "bloqueio automático%").limit(1),
+      ]);
+      if (ipBlock?.length && (count ?? 0) <= 2) {
+        await context.supabase.from("api_keys").update({ status: "active" }).eq("id", data.keyId).eq("status", "blocked");
+        reactivated = true;
+      }
+    }
+    await audit(context, "key.ip_limit", "api_key", data.keyId, { ip_limit: data.ipLimit, reactivated });
+    return { ok: true, reactivated };
+  });
+
 export const adminSetKeyStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid(), status: z.enum(["active", "blocked", "revoked"]) }).parse(d))

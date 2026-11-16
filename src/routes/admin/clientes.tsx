@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { KeyIpLimitEditor } from "@/components/KeyIpLimitEditor";
 import { LiveIndicator } from "@/lib/admin-ui";
 import { StatusBadge, fmt, fmtDate } from "@/lib/admin-ui";
 import { adminDeliveryMessage } from "@/lib/reseller-delivery-message";
@@ -359,6 +360,7 @@ function KeyIps({ keyId }: { keyId: string }) {
             </div>
           ))}
         </div>}
+        {data && <KeyIpLimitEditor keyId={keyId} current={allowance} />}
       </>}
     </div>
   );

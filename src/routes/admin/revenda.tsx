@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { KeyIpLimitEditor } from "@/components/KeyIpLimitEditor";
 import { PageTitle, Panel } from "@/lib/admin-ui";
 import { adminListResellerKeys, adminListResellers, adminMarkPayoutPaid, adminSetResellerStatus, adminUpsertReseller } from "@/lib/reseller.functions";
 import { adminKeyIps, adminSetKeyStatus } from "@/lib/admin.functions";
@@ -127,6 +128,7 @@ function ResellerKeyIps({ keyId }: { keyId: string }) {
         <code className="font-mono">{i.ip}</code>
         <span className="text-muted-foreground">{i.requests.toLocaleString("pt-BR")} requisições · último: {new Date(i.last_seen).toLocaleString("pt-BR")}</span>
       </div>)}
+      {data && <KeyIpLimitEditor keyId={keyId} current={allowance} />}
     </>}
   </div>;
 }
