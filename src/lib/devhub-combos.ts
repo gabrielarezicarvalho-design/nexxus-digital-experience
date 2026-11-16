@@ -10,6 +10,9 @@ export const DEVHUB_COMBOS = [
 
 const spelling = (id: string) => id.toLowerCase().replace(/[._]/g, "-");
 
+/** Fastest DevHub Claude models first (measured from the VPS on 15/11/2026), used for the Haiku combo. */
+export const DEVHUB_FAST_ORDER = ["claude-fable-5-1", "claude-opus-5-5", "claude-sonnet-5", "claude-opus-5"];
+
 export function isDevhubCombo(account: { name: string }, model: string): boolean {
   return account.name === DEVHUB_PROVIDER && DEVHUB_COMBOS.some((combo) => combo === spelling(model));
 }
@@ -21,7 +24,12 @@ export function devhubComboModels(account: { name: string; available_models?: st
   const list = [...new Set(account.available_models ?? [])].filter((m) => /^claude-/i.test(m));
   if (!list.length) return null;
   const same = list.filter((m) => spelling(m) === spelling(model));
-  return [...same, ...list.filter((m) => !same.includes(m))];
+  // The DevHub has no Haiku: answer it with the fastest Claude measured (15/11/2026), so quick first
+  // requests from Claude Code do not time out on the client while a slow model is still thinking.
+  const preferred = spelling(model) === "claude-haiku-5-5"
+    ? DEVHUB_FAST_ORDER.map((id) => list.find((m) => spelling(m) === id)).filter((m): m is string => Boolean(m) && !same.includes(m as string))
+    : [];
+  return [...same, ...preferred, ...list.filter((m) => !same.includes(m) && !preferred.includes(m))];
 }
 
 // 9Router (Anthropic Revenda) is only the reserve for families the DevHub does not sell (GPT, Gemini…).

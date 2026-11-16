@@ -17,8 +17,9 @@ test('a combo tries only the DevHub Claude models, the same-named one first', ()
   expect(new Set(models)).toEqual(new Set(claudeOnly));
 });
 
-test('haiku combo has no same-named model and keeps the saved Claude order', () => {
-  expect(devhubComboModels(devhub, 'claude-haiku-5-5')).toEqual(claudeOnly);
+test('haiku combo has no same-named model and tries every Claude model, fastest first', () => {
+  const hops = devhubComboModels(devhub, 'claude-haiku-5-5') ?? [];
+  expect([...hops].sort()).toEqual([...claudeOnly].sort());
 });
 
 test('dotted spelling uses the same combo', () => {
@@ -51,4 +52,10 @@ test("Claude only goes to the DevHub; GPT and Gemini only to the 9Router reserve
   expect(devhubServesInCommonLine(devhub, "gpt-6-sol")).toBe(false);
   expect(devhubServesInCommonLine(revenda, "gpt-6-sol")).toBe(true);
   expect(devhubServesInCommonLine(revenda, "gemini-4-argon")).toBe(true);
+});
+
+test("Haiku (absent on the DevHub) tries the fastest measured Claude models first", () => {
+  const dh = { name: "DevHub Brasil", available_models: ["claude-sonnet-5", "claude-sonnet-5.5", "claude-opus-4.8", "claude-opus-5", "claude-opus-5.5", "claude-fable-5.1"] };
+  expect(devhubComboModels(dh, "claude-haiku-5-5")?.slice(0, 4)).toEqual(["claude-fable-5.1", "claude-opus-5.5", "claude-sonnet-5", "claude-opus-5"]);
+  expect(devhubComboModels(dh, "claude-opus-5-5")?.[0]).toBe("claude-opus-5.5");
 });
