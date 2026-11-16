@@ -1,5 +1,6 @@
 import { FREE_AI_PROVIDER, rebrandResponse, withNexaIdentity } from "./free-ai-identity";
 import { planExclusiveProvider } from "./plan-exclusive-models";
+import { nexacleanModel, NEXACLEAN_PROVIDER, NEXACLEAN_UPSTREAM } from "./nexaclean-models";
 import { anthropicRevendaCombo as revendaCombo, tokensTokenCombo } from './provider-catalog';
 const anthropicRevendaCombo = (a: { name: string; available_models?: string[] | null }, m: string) => revendaCombo(a, m) ?? tokensTokenCombo(a, m);
 import { INVISION_MODEL_ALIASES } from './invision-models';
@@ -166,6 +167,13 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
       return { chain: [{ account, upstreamModel: ASTRA_TARGET }] };
     }
 
+    // Nexaclean vai só para o Free.ai, com ou sem cadeia dedicada na chave.
+    if (nexacleanModel(model)) {
+      const owner = all.find((a) => a.name === NEXACLEAN_PROVIDER);
+      if (!owner) throw new Error("Modelo temporariamente indisponível");
+      return { chain: [{ account: owner, upstreamModel: NEXACLEAN_UPSTREAM }] };
+    }
+
     if (forcedProvider) {
       // "A,B" = principal e reserva dedicadas; reserva só entra se conhecer o modelo.
       const names = dedicatedProviders(forcedProvider);
@@ -196,7 +204,7 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
 
     return { chain: globalProviderHops(list, model, row?.provider, upstreamModel) };
   } catch (error) {
-    if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider) throw error;
+    if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model)) throw error;
     return { chain: [{ account: DEFAULT, upstreamModel: model }] };
   }
 }
