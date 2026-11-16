@@ -1,4 +1,5 @@
 import { blockedKeyMessage, IP_LIMIT_BLOCK_MESSAGE } from "@/lib/key-block-message";
+import { cancelAware } from "@/lib/client-cancel";
 import { billedUsage } from "./cache-billing";
 import { keyBurstLimit, keyBurstMessage } from '@/lib/monthly-burst';
 import { sseToCompletion } from "@/lib/sse-completion";
@@ -48,7 +49,7 @@ export async function handleChatCompletions(request: Request, adapter?: ChatComp
 
   const ip = clientIp(request);
   const failures: ProviderFailure[] = [];
-  const log = (status_code: number, extra: Record<string, unknown> = {}) =>
+  const log = (rawStatus: number, rawExtra: Record<string, unknown> = {}) => { const [status_code, extra] = cancelAware(request, rawStatus, rawExtra); return (
     db.from("request_logs").insert({
       api_key_id: key?.id ?? null,
       client_id: key?.client_id ?? null,
@@ -57,7 +58,7 @@ export async function handleChatCompletions(request: Request, adapter?: ChatComp
       client_ip: ip,
       ...extra,
       error: routingDiagnostic(typeof extra['error'] === 'string' ? extra['error'] : undefined, failures),
-    });
+    })); };
 
   if (!key) return err(401, "API key inválida", "authentication_error");
   const paymentBlockMessage = resellerPaymentBlockMessage(key);
@@ -159,7 +160,7 @@ export async function handleChatCompletions(request: Request, adapter?: ChatComp
     const b = billedUsage(u);
     await log(status, { model, stream, prompt_tokens: b.prompt_tokens, completion_tokens: b.completion_tokens, total_tokens: b.total_tokens, cached_tokens: b.cached_tokens, cache_write_tokens: b.cache_write_tokens, cache_discount_tokens: b.cache_discount_tokens, error: error ?? null, provider });
     if (status < 400) await db.rpc("record_key_usage", { _key_id: key.id, _tokens: b.total_tokens });
-    await onUsage(b.raw_total_tokens, status, error);
+    await onUsage(b.raw_total_tokens, cancelAware(request, status)[0], error);
   };
 
   if (!upstream.ok) {

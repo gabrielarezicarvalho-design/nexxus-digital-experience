@@ -1,4 +1,5 @@
 import { blockedKeyMessage, IP_LIMIT_BLOCK_MESSAGE } from "@/lib/key-block-message";
+import { cancelAware } from "@/lib/client-cancel";
 import { anthropicUsage, billedUsage } from "@/lib/cache-billing";
 import { checkKeyRpm, rpmRefusal } from "@/lib/mass-agent-guard";
 import { keyBurstLimit, keyBurstMessage } from '@/lib/monthly-burst';
@@ -132,8 +133,8 @@ export const Route = createFileRoute("/api/public/v1/messages")({
 
         const ip = clientIp(request);
         const failures: ProviderFailure[] = [];
-        const log = (status_code: number, extra: Record<string, unknown> = {}) =>
-          db.from("request_logs").insert({ api_key_id: key?.id ?? null, client_id: key?.client_id ?? null, status_code, latency_ms: Date.now() - started, client_ip: ip, ...extra, error: routingDiagnostic(typeof extra['error'] === 'string' ? extra['error'] : undefined, failures) });
+        const log = (rawStatus: number, rawExtra: Record<string, unknown> = {}) => { const [status_code, extra] = cancelAware(request, rawStatus, rawExtra); return (
+          db.from("request_logs").insert({ api_key_id: key?.id ?? null, client_id: key?.client_id ?? null, status_code, latency_ms: Date.now() - started, client_ip: ip, ...extra, error: routingDiagnostic(typeof extra['error'] === 'string' ? extra['error'] : undefined, failures) })); };
 
         if (!key) return aerr(401, "API key inválida", "authentication_error");
         const paymentBlockMessage = resellerPaymentBlockMessage(key);
@@ -216,7 +217,7 @@ export const Route = createFileRoute("/api/public/v1/messages")({
           const b = billedUsage(u);
           await log(status, { model, stream, prompt_tokens: b.prompt_tokens, completion_tokens: b.completion_tokens, total_tokens: b.total_tokens, cached_tokens: b.cached_tokens, cache_write_tokens: b.cache_write_tokens, cache_discount_tokens: b.cache_discount_tokens, error: error ?? null, provider });
           if (status < 400) await db.rpc("record_key_usage", { _key_id: key.id, _tokens: b.total_tokens });
-          await upstreamP.then((r) => r.onUsage(b.raw_total_tokens, status, error)).catch(() => {});
+          await upstreamP.then((r) => r.onUsage(b.raw_total_tokens, cancelAware(request, status)[0], error)).catch(() => {});
         };
 
         // Streaming: abre a resposta na hora e mantém viva com "ping" enquanto o provedor (lento) pensa,
