@@ -1,7 +1,7 @@
 import { FREE_AI_PROVIDER, rebrandResponse, withNexaIdentity } from "./free-ai-identity";
 import { planExclusiveProvider } from "./plan-exclusive-models";
 import { nexacleanModel, NEXACLEAN_PROVIDER, NEXACLEAN_UPSTREAM } from "./nexaclean-models";
-import { comboOrder, isComboName, nextComboTurn, type ComboStrategy } from "./model-combos";
+import { comboOrder, nextComboTurn, type ComboStrategy } from "./model-combos";
 import { anthropicRevendaCombo as revendaCombo, tokensTokenCombo } from './provider-catalog';
 const anthropicRevendaCombo = (a: { name: string; available_models?: string[] | null }, m: string) => revendaCombo(a, m) ?? tokensTokenCombo(a, m);
 import { INVISION_MODEL_ALIASES } from './invision-models';
@@ -151,11 +151,12 @@ export function isUnavailableModel(status: number, text: string): boolean {
 async function resolveRoute(model: string, forcedProvider?: string | null): Promise<{ chain: Hop[] }> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: modelRows }, { data: accounts }] = await Promise.all([
+    const [{ data: modelRows }, { data: accounts }, { data: combo }] = await Promise.all([
       // O mesmo nome pode existir em vários fornecedores (uma linha por fornecedor), cada um com seu modelo interno.
       supabaseAdmin.from("models").select("provider, internal_id").eq("name", model).order("created_at"),
       supabaseAdmin.from("provider_accounts").select("name, base_url, api_secret_name, default_model, available_models, dedicated_only")
         .eq("active", true).eq("paused", false).order("priority").order("created_at"),
+      (supabaseAdmin as any).from("model_combos").select("strategy, enabled, model_combo_items(position, provider, model)").eq("name", model.toLowerCase()).maybeSingle(),
     ]);
     const all = (accounts ?? []) as Account[];
     const rows = (modelRows ?? []) as { provider: string; internal_id: string | null }[];
@@ -174,9 +175,7 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
     }
 
     // Combo da Nexa: tenta os itens do combo (fornecedor + modelo), em ordem ou em rodízio.
-    if (isComboName(model)) {
-      const { data: combo } = await (supabaseAdmin as any).from("model_combos")
-        .select("strategy, enabled, model_combo_items(position, provider, model)").eq("name", model.toLowerCase()).maybeSingle();
+    {
       if (combo) {
         if (!combo.enabled) throw new Error("Combo desativado");
         const items = ((combo.model_combo_items ?? []) as { position: number; provider: string; model: string }[]).sort((a, b) => a.position - b.position);
@@ -232,7 +231,7 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
 
     return { chain: globalProviderHops(list, model, row?.provider, upstreamModel, internals) };
   } catch (error) {
-    if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model) || isComboName(model)) throw error;
+    if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model) || (error instanceof Error && /combo/i.test(error.message))) throw error;
     return { chain: [{ account: DEFAULT, upstreamModel: model }] };
   }
 }

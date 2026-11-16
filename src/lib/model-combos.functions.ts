@@ -27,7 +27,7 @@ export const adminSaveCombo = createServerFn({ method: "POST" })
   .inputValidator((d) => comboInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const problem = comboNameProblem(data.name);
+    const problem = comboNameProblem(data.name, data.items);
     if (problem) throw new Error(problem);
     const providers = [...new Set(data.items.map((i) => i.provider))];
     const { data: accounts, error: accErr } = await context.supabase.from("provider_accounts").select("name").in("name", providers);

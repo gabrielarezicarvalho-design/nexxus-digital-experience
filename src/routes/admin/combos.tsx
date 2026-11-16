@@ -17,7 +17,7 @@ type Combo = { id: string; name: string; display_name: string | null; descriptio
 type Draft = { id?: string; name: string; display_name: string; description: string; strategy: "fallback" | "round_robin"; enabled: boolean; items: Item[] };
 type TestResult = Awaited<ReturnType<typeof adminTestCombo>>;
 
-const empty: Draft = { name: "nexa-", display_name: "", description: "", strategy: "fallback", enabled: true, items: [{ provider: "", model: "" }] };
+const empty: Draft = { name: "", display_name: "", description: "", strategy: "fallback", enabled: true, items: [{ provider: "", model: "" }] };
 const inputCls = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
 const STRATEGY: Record<Draft["strategy"], string> = { fallback: "Em ordem: tenta o próximo se o anterior falhar", round_robin: "Rodízio: cada pedido começa em um modelo diferente" };
 
@@ -60,7 +60,7 @@ function Combos() {
     [items[i], items[j]] = [items[j]!, items[i]!];
     setDraft({ ...draft, items });
   };
-  const nameProblem = draft ? comboNameProblem(draft.name.trim().toLowerCase()) : null;
+  const nameProblem = draft ? comboNameProblem(draft.name.trim().toLowerCase(), draft.items.filter((it) => it.provider && it.model.trim())) : null;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -93,8 +93,8 @@ function Combos() {
           <form onSubmit={submit} className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-xs text-muted-foreground">Nome do combo (o cliente usa este nome)
-                <input required className={`mt-1 font-mono ${inputCls}`} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value.toLowerCase() })} placeholder="nexa-turbo" />
-                <span className={`mt-1 block ${nameProblem ? "text-destructive" : ""}`}>{nameProblem ?? 'Começa com "nexa-". Use um nome da sua marca, nunca nome de Claude, GPT ou Gemini.'}</span>
+                <input required className={`mt-1 font-mono ${inputCls}`} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value.toLowerCase() })} placeholder="turbo-max" />
+                <span className={`mt-1 block ${nameProblem ? "text-destructive" : ""}`}>{nameProblem ?? "Qualquer nome. Se usar nome de Claude, GPT ou Gemini, todos os modelos do combo precisam ser dessa família."}</span>
               </label>
               <label className="text-xs text-muted-foreground">Nome de exibição<input className={`mt-1 ${inputCls}`} value={draft.display_name} onChange={(e) => setDraft({ ...draft, display_name: e.target.value })} placeholder="Nexa Turbo" /></label>
               <label className="text-xs text-muted-foreground">Estratégia
