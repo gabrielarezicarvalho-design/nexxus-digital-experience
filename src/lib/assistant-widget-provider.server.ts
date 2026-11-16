@@ -25,7 +25,7 @@ export async function widgetLanguageModel() {
     .select("name, active, paused, base_url, api_secret_name, available_models").eq("name", WIDGET_PROVIDER);
   if (error) throw new Error("Não foi possível abrir o atendimento agora.");
   const account = widgetAccount(data ?? []);
-  const apiKey = process.env[account.api_secret_name];
+  const apiKey = process.env[account.api_secret_name] ?? await (await import("./provider-secrets.server")).providerSecret(account.api_secret_name);
   if (!apiKey) throw new Error("Atendimento não configurado. Fale com o suporte pelo WhatsApp.");
   const provider = createOpenAI({
     baseURL: account.base_url.replace(/\/+$/, ""),

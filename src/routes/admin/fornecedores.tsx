@@ -29,7 +29,7 @@ type Provider = {
   id: string; name: string; provider_type: string; base_url: string; api_secret_name: string;
   priority: number; active: boolean; paused: boolean; available_models: string[]; updated_at: string; default_model?: string | null;
 };
-type Form = Omit<Provider, "id" | "active" | "paused" | "available_models" | "updated_at"> & { id?: string };
+type Form = Omit<Provider, "id" | "active" | "paused" | "available_models" | "updated_at" | "default_model"> & { id?: string; api_key?: string };
 type TestState = { state: "online" | "error" | "unconfigured"; latencyMs: number | null };
 type StoredCheck = { state: "online" | "error" | "unconfigured"; at: number };
 
@@ -44,13 +44,13 @@ const checkedAgo = (at: number) => {
 };
 
 const inputClass = "h-10 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-accent";
-const defaults: Form = { name: "", provider_type: "CodeCraft API", base_url: "https://www.codecraftapi.com/v1", api_secret_name: "CODECRAFT_API_KEY", priority: 100 };
+const defaults: Form = { name: "", provider_type: "Personalizado", base_url: "", api_secret_name: "", priority: 100, api_key: "" };
 const presets: Record<string, { base: string; secret: string }> = {
   "CodeCraft API": { base: "https://www.codecraftapi.com/v1", secret: "CODECRAFT_API_KEY" },
   OpenAI: { base: "https://api.openai.com/v1", secret: "OPENAI_API_KEY" },
   Anthropic: { base: "https://api.anthropic.com/v1", secret: "ANTHROPIC_API_KEY" },
   OpenRouter: { base: "https://openrouter.ai/api/v1", secret: "OPENROUTER_API_KEY" },
-  Personalizado: { base: "", secret: "PROVIDER_API_KEY" },
+  Personalizado: { base: "", secret: "" },
 };
 
 function Providers() {
@@ -105,7 +105,7 @@ function Providers() {
   });
   const run = async (action: () => Promise<unknown>) => {
     setError(null); setBusy(true);
-    try { await action(); await refresh(); } catch (cause) { setError((cause as Error).message); } finally { setBusy(false); }
+    try { await action(); await refresh(); } catch (cause) { setError(friendlyError(cause)); } finally { setBusy(false); }
   };
   const chooseType = (provider_type: string) => {
     const preset = presets[provider_type] ?? presets["Personalizado"];
@@ -115,9 +115,10 @@ function Providers() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     await run(async () => {
-      const data = { ...form, priority: Number(form.priority) };
-      if (form.id) await update({ data: { ...data, id: form.id } });
+      const { id, ...data } = { ...form, priority: Number(form.priority), api_key: form.api_key ?? "" };
+      if (id) await update({ data: { ...data, id } });
       else await create({ data });
+      setNotice(id ? `${form.name} · alterações salvas.` : `${form.name} · conta adicionada. Use "Puxar modelos" para carregar os modelos dela.`);
       setForm(defaults);
     });
   };
@@ -169,9 +170,11 @@ function Providers() {
         <form onSubmit={submit} className="grid gap-3 lg:grid-cols-2">
           <label className="text-xs text-muted-foreground">Fornecedor<select aria-label="Fornecedor" className={`mt-1 ${inputClass}`} value={form.provider_type} onChange={(event) => chooseType(event.target.value)}>{Object.keys(presets).map((name) => <option key={name}>{name}</option>)}</select></label>
           <label className="text-xs text-muted-foreground">Nome da conta<input required aria-label="Nome da conta" className={`mt-1 ${inputClass}`} placeholder="Ex.: CodeCraft API 01" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
-          <label className="text-xs text-muted-foreground">Nome do segredo<input required aria-label="Nome do segredo" className={`mt-1 ${inputClass}`} placeholder="CODECRAFT_API_KEY" value={form.api_secret_name} onChange={(event) => setForm({ ...form, api_secret_name: event.target.value.toUpperCase() })} /><span className="mt-1 block">A chave fica protegida no servidor e nunca aparece nesta tela.</span></label>
+          <label className="text-xs text-muted-foreground">API key<input type="password" autoComplete="off" required={!form.id && !form.api_secret_name} aria-label="API key" className={`mt-1 ${inputClass}`} placeholder={form.id ? "Em branco mantém a chave atual" : "Cole aqui a API key do fornecedor"} value={form.api_key ?? ""} onChange={(event) => setForm({ ...form, api_key: event.target.value })} /><span className="mt-1 block">A chave fica guardada no servidor e nunca volta a aparecer nesta tela.</span></label>
+          <label className="text-xs text-muted-foreground">Nome do segredo (opcional)<input aria-label="Nome do segredo" className={`mt-1 ${inputClass}`} placeholder="Criado a partir do nome da conta" value={form.api_secret_name} onChange={(event) => setForm({ ...form, api_secret_name: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_") })} /><span className="mt-1 block">Só para chaves já colocadas no servidor. Em branco, o painel cria um.</span></label>
           <label className="text-xs text-muted-foreground">URL base<input required type="url" aria-label="URL base" className={`mt-1 ${inputClass}`} value={form.base_url} onChange={(event) => setForm({ ...form, base_url: event.target.value })} /></label>
           <label className="text-xs text-muted-foreground">Prioridade<input required type="number" min="0" max="10000" aria-label="Prioridade" className={`mt-1 ${inputClass}`} value={form.priority} onChange={(event) => setForm({ ...form, priority: Number(event.target.value) })} /></label>
+          {error && <p role="alert" className="text-sm text-destructive lg:col-span-2">{error}</p>}
           <div className="flex items-end"><Button disabled={busy} type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"><PlugZap />{busy ? "Salvando…" : form.id ? "Salvar alterações" : "Salvar conta"}</Button></div>
         </form>
       </section>
@@ -271,4 +274,14 @@ function Providers() {
       </section>
     </div>
   );
+}
+
+/** Mensagens de validação do servidor chegam como JSON; mostra só o texto útil. */
+function friendlyError(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message : String(cause);
+  try {
+    const parsed = JSON.parse(message) as Array<{ message?: string; path?: string[] }>;
+    if (Array.isArray(parsed) && parsed.length) return parsed.map((issue) => issue.message).filter(Boolean).join(" ");
+  } catch { /* não é JSON */ }
+  return message;
 }

@@ -14,15 +14,30 @@ const accountInput = z.object({
   name: z.string().trim().min(1).max(120),
   provider_type: z.enum(["CodeCraft API", "OpenAI", "Anthropic", "OpenRouter", "Personalizado"]),
   base_url: z.string().url().max(500),
-  api_secret_name: z.string().trim().regex(/^[A-Z][A-Z0-9_]{2,99}$/, "Informe o nome do segredo, como CODECRAFT_API_KEY."),
+  // Opcional: em branco, é criado a partir do nome da conta.
+  api_secret_name: z.string().trim().regex(/^([A-Z][A-Z0-9_]{2,99})?$/, "O nome do segredo usa só letras maiúsculas, números e _, como MEU_FORNECEDOR_API_KEY. Cole a chave no campo API key.").optional().default(""),
   priority: z.number().int().min(0).max(10000),
+  // A chave em si. No cadastro é obrigatória se o servidor ainda não tiver esse segredo; na edição, em branco mantém a atual.
+  api_key: z.string().trim().max(1000).optional().default(""),
 });
+
+async function persistAccountSecret(data: { name: string; api_secret_name: string; api_key: string }, creating: boolean) {
+  const secrets = await import("./provider-secrets.server");
+  const secretName = data.api_secret_name || secrets.secretNameFor(data.name);
+  if (data.api_key) {
+    if (data.api_key.length < 8) throw new Error("A API key parece incompleta.");
+    await secrets.saveProviderSecret(secretName, data.api_key);
+  } else if (creating && !(await secrets.providerSecret(secretName))) {
+    throw new Error("Cole a API key do fornecedor no campo API key.");
+  }
+  return secretName;
+}
 
 const endpointFor = (baseUrl: string) => `${baseUrl.replace(/\/$/, "")}/models`;
 
 async function testConnection(account: { name: string; base_url: string; api_secret_name: string }) {
   const { providerProxyHeaders, providerRequestBase } = await import("./provider-transport.server");
-  const key = process.env[account.api_secret_name];
+  const key = process.env[account.api_secret_name] ?? await (await import("./provider-secrets.server")).providerSecret(account.api_secret_name);
   if (!key) return { state: "unconfigured" as const, latencyMs: null, models: [] as string[] };
   const started = Date.now();
   try {
@@ -45,8 +60,11 @@ export const adminCreateProvider = createServerFn({ method: "POST" })
   .inputValidator((data) => accountInput.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { api_key, ...fields } = data;
+    const api_secret_name = await persistAccountSecret(data, true);
     const { data: account, error } = await context.supabase.from("provider_accounts").insert({
-      ...data,
+      ...fields,
+      api_secret_name,
       active: true,
       paused: false,
       provider_plan: "api",
@@ -61,8 +79,10 @@ export const adminUpdateProvider = createServerFn({ method: "POST" })
   .inputValidator((data) => accountInput.extend({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { id, ...changes } = data;
-    const { error } = await context.supabase.from("provider_accounts").update(changes).eq("id", id);
+    const { id, api_key, ...changes } = data;
+    const { data: current } = await context.supabase.from("provider_accounts").select("api_secret_name").eq("id", id).maybeSingle();
+    const api_secret_name = await persistAccountSecret({ ...data, api_secret_name: data.api_secret_name || current?.api_secret_name || "" }, false);
+    const { error } = await context.supabase.from("provider_accounts").update({ ...changes, api_secret_name }).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -82,8 +102,15 @@ export const adminDeleteProvider = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { data: account } = await context.supabase.from("provider_accounts").select("name, api_secret_name").eq("id", data.id).maybeSingle();
     const { error } = await context.supabase.from("provider_accounts").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    if (account) {
+      // Remove os modelos do catálogo ligados a ela e a chave guardada pelo painel, se nenhuma outra conta usa o mesmo segredo.
+      await context.supabase.from("models").delete().eq("provider", account.name);
+      const { count } = await context.supabase.from("provider_accounts").select("id", { count: "exact", head: true }).eq("api_secret_name", account.api_secret_name);
+      if (!count) await (await import("./provider-secrets.server")).deleteProviderSecret(account.api_secret_name);
+    }
     return { ok: true };
   });
 

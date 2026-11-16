@@ -232,6 +232,11 @@ const rejectedCleanKeys = new Set<number>();
 
 async function eligibleAccountKeys(account: Account) {
   const keys = accountKeys(account.api_secret_name);
+  if (!keys.length) {
+    const { providerSecret } = await import("./provider-secrets.server");
+    const stored = await providerSecret(account.api_secret_name);
+    if (stored) keys.push({ idx: 0, value: stored });
+  }
   if (account.name !== "Clean APIs") return keys;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.from("provider_key_usage")
