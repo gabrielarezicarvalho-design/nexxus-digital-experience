@@ -34,7 +34,9 @@ async function providerModelNames(db: SupabaseClient<Database>, forcedProvider?:
     const { data, error } = await db.from('provider_accounts').select('available_models')
       .eq('name', forcedProvider).eq('active', true).eq('paused', false).maybeSingle();
     if (error) throw new Error('Não foi possível carregar os modelos disponíveis.');
-    const names = [...new Set(data?.available_models ?? [])];
+    // Chave fixa no fornecedor: todos os modelos dele, a lista do fornecedor mais os nomes do catálogo ligados a ele.
+    const { data: catalogRows } = await db.from('models').select('name').eq('provider', forcedProvider).eq('enabled', true).eq('catalog_approved', true);
+    const names = [...new Set([...(data?.available_models ?? []), ...((catalogRows ?? []) as { name: string }[]).map(r => r.name)])];
     if (astraAliasAvailable(forcedProvider, names)) names.push(ASTRA_ALIAS);
     if (forcedProvider === 'Invision') return invisionPublicModels(names);
     if (forcedProvider === 'FreeModel' && clientId) {

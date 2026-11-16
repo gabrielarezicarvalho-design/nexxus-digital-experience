@@ -4,7 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { MONTHLY_PLAN_MODELS, MONTHLY_PLAN_FAMILY } from './plan-models';
 
-function mockDb(email = 'fpaschoali@gmail.com', availableModels = ['claude-opus-4.8', 'claude-sonnet-5', 'gpt-4o-mini'], catalog = ['cloud-opus-5.1', 'gpt-6-astra']) {
+function mockDb(email = 'fpaschoali@gmail.com', availableModels = ['claude-opus-4.8', 'claude-sonnet-5', 'gpt-4o-mini'], catalog = ['cloud-opus-5.1', 'gpt-6-astra'], providerCatalog: string[] = []) {
   const calls: string[] = [];
   const db = { async rpc(name: string) { calls.push(`rpc:${name}`); return { data: catalog, error: null }; }, from(table: string) {
     calls.push(table);
@@ -12,7 +12,7 @@ function mockDb(email = 'fpaschoali@gmail.com', availableModels = ['claude-opus-
       select() { return query; },
       eq(column: string, value: unknown) { calls.push(`${column}:${value}`); return query; },
       async maybeSingle() { return { data: table === 'clients' ? { email } : { available_models: availableModels }, error: null }; },
-      then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data: [{ name: 'cloud-opus-5.1' }], error: null }).then(resolve); },
+      then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data: table === 'models' ? providerCatalog.map(name => ({ name })) : [{ name: 'cloud-opus-5.1' }], error: null }).then(resolve); },
     };
     return query;
   } } as unknown as SupabaseClient<Database>;
@@ -21,7 +21,7 @@ function mockDb(email = 'fpaschoali@gmail.com', availableModels = ['claude-opus-
 test('cliente dedicado à FreeModel recebe os modelos próprios, não o catálogo global', async () => {
   const { db, calls } = mockDb();
   expect(await clientModelNames(db, 'FreeModel', null, 'combo')).toEqual(['claude-opus-4.8', 'claude-sonnet-5', 'gpt-4o-mini']);
-  expect(calls).toEqual(['provider_accounts', 'name:FreeModel', 'active:true', 'paused:false']);
+  expect(calls).toEqual(['provider_accounts', 'name:FreeModel', 'active:true', 'paused:false', 'models', 'provider:FreeModel', 'enabled:true', 'catalog_approved:true']);
 });
 test('demais clientes continuam recebendo somente o catálogo global habilitado', async () => {
   const { db, calls } = mockDb();
@@ -132,3 +132,8 @@ for (const [code, expected] of [
     expect(await clientKeyModelNames(db, { client_id: null, model_family: MONTHLY_PLAN_FAMILY[code] ?? 'claude', allowed_models: [...MONTHLY_PLAN_MODELS[code]] })).toEqual([...expected]);
   });
 }
+
+test('chave fixa num fornecedor recebe todos os modelos dele, inclusive os nomes do catálogo ligados a ele', async () => {
+  const { db } = mockDb('x@y.com', ['qwen-coder', 'qwen7b'], [], ['nexaclean-pro', 'qwen-coder']);
+  expect(await clientModelNames(db, 'Free.ai', null, 'combo')).toEqual(['qwen-coder', 'qwen7b', 'nexaclean-pro']);
+});

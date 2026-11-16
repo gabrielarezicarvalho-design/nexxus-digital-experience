@@ -10,7 +10,7 @@ import { LiveIndicator } from "@/lib/admin-ui";
 import { StatusBadge, fmt, fmtDate } from "@/lib/admin-ui";
 import { adminDeliveryMessage } from "@/lib/reseller-delivery-message";
 import { TRIAL_PLAN_NAME, TRIAL_TOKENS } from "@/lib/free-trial";
-import { adminCreateClient, adminDeleteClient, adminFindClientByKey, adminPurgeKeylessClients, adminGenerateKey, adminKeyIps, adminRegenerateKey, adminRenewKey, adminSetClientStatus, adminSetKeyStatus, adminUpdateClient } from "@/lib/admin.functions";
+import { adminCreateClient, adminDeleteClient, adminFindClientByKey, adminPurgeKeylessClients, adminGenerateKey, adminKeyIps, adminRegenerateKey, adminRenewKey, adminSetClientStatus, adminSetKeyStatus, adminSetKeyProvider, adminUpdateClient } from "@/lib/admin.functions";
 import { filterAdminClients, isFullApiKeySearch, visibleKeysForSearch } from "@/lib/admin-client-search";
 import { Copy, KeyRound, Network, Search, X } from "lucide-react";
 import { hasTokenLimit } from "@/lib/plan-limits";
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/admin/clientes")({
   component: Clientes,
 });
 
-type Key = { id: string; key_prefix: string | null; plano?: string | null; model_family?: string | null; status: string; token_limit: number | null; daily_token_limit: number | null; tokens_used: number; requests_count: number; expires_at: string | null; last_used_at: string | null; created_at: string };
+type Key = { id: string; key_prefix: string | null; plano?: string | null; model_family?: string | null; status: string; token_limit: number | null; daily_token_limit: number | null; tokens_used: number; requests_count: number; expires_at: string | null; last_used_at: string | null; created_at: string; forced_provider?: string | null };
 type Row = {
   id: string; name: string; email: string; company: string | null; phone: string | null; status: string; plan_id: string | null;
   plans: { name: string } | null;
@@ -108,7 +108,7 @@ function Clientes() {
     queryKey: ["admin-clients"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients")
-        .select("id, name, email, company, phone, status, plan_id, plans(name), api_keys(id, key_prefix, plano, model_family, status, token_limit, daily_token_limit, tokens_used, requests_count, expires_at, last_used_at, created_at)")
+        .select("id, name, email, company, phone, status, plan_id, plans(name), api_keys(id, key_prefix, plano, model_family, status, token_limit, daily_token_limit, tokens_used, requests_count, expires_at, last_used_at, created_at, forced_provider)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as Row[];
@@ -246,6 +246,7 @@ function Clientes() {
             <div className="flex gap-1"><Button size="sm" variant="outline" onClick={() => setIpsDe(ipsDe === key.id ? null : key.id)}><Network /> IPs</Button>{key.status !== "revoked" && <><Button size="sm" variant="outline" onClick={() => run(() => setKeyStatus({ data: { id: key.id, status: key.status === "active" ? "blocked" : "active" } }))}>{key.status === "active" ? "Bloquear chave" : "Ativar chave"}</Button><Button size="sm" variant="outline" className="text-destructive" onClick={() => confirm("Revogar esta chave de vez?") && run(() => setKeyStatus({ data: { id: key.id, status: "revoked" } }))}>Revogar</Button></>}</div></div>
             <div className="mt-2 flex flex-wrap justify-between gap-1 text-xs text-muted-foreground"><span>{key.daily_token_limit ? `${fmt(key.tokens_used)} tokens consumidos · ${fmt(key.daily_token_limit)} tokens/dia` : `${fmt(key.tokens_used)} / ${fmt(key.token_limit)} tokens`}</span><span>{fmt(key.requests_count)} requisições</span></div>
             <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted" role="progressbar" aria-label={`Uso da chave de ${r.name}`} aria-valuenow={key.token_limit ? Math.min(100, Math.round(key.tokens_used / key.token_limit * 100)) : 0} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded bg-accent" style={{ width: `${key.token_limit ? Math.min(100, key.tokens_used / key.token_limit * 100) : 0}%` }} /></div>
+            {key.status !== "revoked" && <KeyProviderPicker keyId={key.id} current={key.forced_provider ?? null} />}
             {ipsDe === key.id && <KeyIps keyId={key.id} />}
             {canUpgradeTokens(key) && <Button size="sm" variant="outline" className="mt-3" onClick={() => { setExtraTokens(''); setUpgrade({ key, name: r.name, requestId: crypto.randomUUID() }); }}>Adicionar tokens</Button>}
           </div>)}
@@ -330,6 +331,36 @@ function RenovarModal({ row, onClose, onSave }: { row: Row; onClose: () => void;
         <Button onClick={() => onSave(Number(days), parseTokens(tokens))} className="bg-accent text-accent-foreground hover:bg-accent/90">Renovar e reativar</Button>
       </div>
     </Modal>
+  );
+}
+
+function KeyProviderPicker({ keyId, current }: { keyId: string; current: string | null }) {
+  const save = useServerFn(adminSetKeyProvider);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const { data: providers = [] } = useQuery({ queryKey: ["admin-provider-names"], staleTime: 60000, queryFn: async () => {
+    const { data, error } = await supabase.from("provider_accounts").select("name, active").order("priority");
+    if (error) throw error;
+    return (data ?? []) as { name: string; active: boolean }[];
+  } });
+  const options = current && !providers.some((p) => p.name === current) ? [...providers, { name: current, active: false }] : providers;
+  return (
+    <label className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      Fornecedor fixo
+      <select aria-label="Fornecedor fixo da chave" disabled={busy} value={current ?? ""} className="h-8 rounded-md border border-input bg-background px-2 text-foreground"
+        onChange={async (e) => {
+          const provider = e.target.value || null;
+          setBusy(true); setMsg(null);
+          try { await save({ data: { keyId, provider } }); setMsg(provider ? "Chave fixada; ela usa todos os modelos desse fornecedor." : "Chave voltou ao automático."); await qc.invalidateQueries(); }
+          catch (err) { setMsg(err instanceof Error ? err.message : "Não foi possível salvar."); }
+          finally { setBusy(false); }
+        }}>
+        <option value="">Automático (prioridade dos fornecedores)</option>
+        {options.map((p) => <option key={p.name} value={p.name}>{p.name}{p.active ? "" : " (inativo)"}</option>)}
+      </select>
+      {msg && <span>{msg}</span>}
+    </label>
   );
 }
 

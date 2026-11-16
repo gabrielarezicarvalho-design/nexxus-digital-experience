@@ -194,6 +194,24 @@ export const adminSetKeyIpLimit = createServerFn({ method: "POST" })
     return { ok: true, reactivated };
   });
 
+/** Fixa a chave em um fornecedor (ela passa a ver e usar todos os modelos dele) ou volta ao automático (null). */
+export const adminSetKeyProvider = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ keyId: z.string().uuid(), provider: z.string().trim().min(1).max(120).nullable() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.provider) {
+      const { data: acc, error: accErr } = await context.supabase.from("provider_accounts").select("name").eq("name", data.provider).maybeSingle();
+      if (accErr) throw new Error(accErr.message);
+      if (!acc) throw new Error("Fornecedor não encontrado");
+    }
+    const { data: key, error } = await context.supabase.from("api_keys").update({ forced_provider: data.provider }).eq("id", data.keyId).select("id, forced_provider").maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!key || (key.forced_provider ?? null) !== data.provider) throw new Error("Não foi possível alterar o fornecedor da chave");
+    await audit(context, "key.forced_provider", "api_key", data.keyId, { provider: data.provider });
+    return { ok: true };
+  });
+
 export const adminSetKeyStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid(), status: z.enum(["active", "blocked", "revoked"]) }).parse(d))
