@@ -36,7 +36,7 @@ export function devhubComboModels(account: { name: string; available_models?: st
 // 9Router (Anthropic Revenda) is the reserve behind the DevHub. Gabriel, 15/11/2026: when it answers a Claude
 // request, the answer is labelled RESERVE_LABEL, never with the Claude name, because its pool is not Claude.
 export const NON_CLAUDE_RESERVE_PROVIDER = "Anthropic Revenda";
-export const RESERVE_LABEL = "reserva-nao-claude";
+export const RESERVE_LABEL = "nexa-reserva";
 
 /** Claude goes to the DevHub first and only then to the 9Router reserve; GPT and other families only to the 9Router. */
 export function devhubServesInCommonLine(account: { name: string }, model: string): boolean {
