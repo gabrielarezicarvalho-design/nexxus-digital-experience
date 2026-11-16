@@ -103,7 +103,7 @@ export const adminTestProvider = createServerFn({ method: "POST" })
       const rows = missingProviderModels(account.name, data.id, result.models, existing ?? []);
       if (rows.length) {
         const { error: insertError } = await context.supabase.from("models")
-          .upsert(rows, { onConflict: "name", ignoreDuplicates: true });
+          .upsert(rows, { onConflict: "name,provider", ignoreDuplicates: true });
         if (insertError) throw new Error(insertError.message);
       }
       const { error: updateError } = await context.supabase.from("provider_accounts")
@@ -187,7 +187,7 @@ export const adminImportModels = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ provider: z.string().min(1).max(120), models: z.array(z.string().min(1).max(200)).max(500) }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { data: existing } = await context.supabase.from("models").select("name");
+    const { data: existing } = await context.supabase.from("models").select("name").eq("provider", data.provider);
     const have = new Set(((existing ?? []) as { name: string }[]).map((m) => m.name));
     const slug = (data.provider.toLowerCase().split(/\s+/)[0] || "provider").replace(/[^a-z0-9]/g, "");
     const prefix = data.provider === "CodeCraft API" ? "" : `${slug}-`;

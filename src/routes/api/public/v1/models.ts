@@ -32,7 +32,8 @@ export const Route = createFileRoute("/api/public/v1/models")({
         const { data } = await db.from("models").select("name, created_at").eq("enabled", true).eq("catalog_approved", true);
         return Response.json({
           object: "list",
-          data: (data ?? []).filter((m) => filterPlanModels(allowed, filterByFamily(family, [m.name])).length).map((m) => ({ id: m.name, object: "model", created: Math.floor(new Date(m.created_at).getTime() / 1000), owned_by: "anthropic" })),
+          // O mesmo nome pode estar em vários fornecedores: lista uma vez só.
+          data: (data ?? []).filter((m, i, all) => all.findIndex((o) => o.name === m.name) === i).filter((m) => filterPlanModels(allowed, filterByFamily(family, [m.name])).length).map((m) => ({ id: m.name, object: "model", created: Math.floor(new Date(m.created_at).getTime() / 1000), owned_by: "anthropic" })),
         }, { headers: { 'Cache-Control': 'no-store' } });
       },
     },

@@ -134,12 +134,12 @@ export function isDedicatedOnly(account: { name: string; dedicated_only?: boolea
 }
 
 // Every model, Opus included, follows the saved priority in the common chain (Gabriel, 14/11/2026: DevHub principal for all).
-export function globalProviderHops(accounts: Account[], model: string, ownerName?: string, internalId?: string | null): Hop[] {
+export function globalProviderHops(accounts: Account[], model: string, ownerName?: string, internalId?: string | null, internals?: Map<string, string | null>): Hop[] {
   const common = accounts.filter(account => !isDedicatedOnly(account) && devhubServesInCommonLine(account, model));
   const ordered = common;
   return ordered.map(account => ({
     account,
-    upstreamModel: reserveModel(account, model) ?? (account.name === ownerName && internalId ? internalId : model),
+    upstreamModel: reserveModel(account, model) ?? internals?.get(account.name) ?? (account.name === ownerName && internalId ? internalId : model),
   }));
 }
 
@@ -150,12 +150,17 @@ export function isUnavailableModel(status: number, text: string): boolean {
 async function resolveRoute(model: string, forcedProvider?: string | null): Promise<{ chain: Hop[] }> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: row }, { data: accounts }] = await Promise.all([
-      supabaseAdmin.from("models").select("provider, internal_id").eq("name", model).maybeSingle(),
+    const [{ data: modelRows }, { data: accounts }] = await Promise.all([
+      // O mesmo nome pode existir em vários fornecedores (uma linha por fornecedor), cada um com seu modelo interno.
+      supabaseAdmin.from("models").select("provider, internal_id").eq("name", model).order("created_at"),
       supabaseAdmin.from("provider_accounts").select("name, base_url, api_secret_name, default_model, available_models, dedicated_only")
         .eq("active", true).eq("paused", false).order("priority").order("created_at"),
     ]);
     const all = (accounts ?? []) as Account[];
+    const rows = (modelRows ?? []) as { provider: string; internal_id: string | null }[];
+    const internals = new Map(rows.filter((r) => r.internal_id).map((r) => [r.provider, r.internal_id] as [string, string | null]));
+    const firstActive = rows.find((r) => all.some((a) => a.name === r.provider));
+    const row = firstActive ?? rows[0];
     // Clientes sem cadeia dedicada seguem a prioridade salva dos fornecedores comuns.
     const list = forcedProvider ? all : all.filter((a) => !isDedicatedOnly(a));
     const upstreamModel = row?.internal_id || model;
@@ -180,7 +185,7 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
       const accounts = names.map((n) => all.find((a) => a.name === n)).filter((a): a is Account => Boolean(a));
       if (!accounts.length) throw new Error("Fornecedor dedicado indisponível");
       const supports = (a: Account & { available_models?: string[] | null }) => Boolean(devhubComboModels(a, model)) || Boolean(freeApiSlot(a, row?.internal_id || model)) || Boolean(anthropicRevendaCombo(a, model)) || Boolean(invisionModel(a, model)) || (a.available_models ?? []).includes(model) || Boolean(sameModelSpelling(a.available_models, model)) || Boolean(row?.internal_id && ((a.available_models ?? []).includes(row.internal_id) || sameModelSpelling(a.available_models, row.internal_id)));
-      const chain = accounts.filter((a, i) => i === 0 ? supports(a) || accounts.length === 1 : supports(a)).map((a) => forcedHop(a, model, row?.internal_id));
+      const chain = accounts.filter((a, i) => i === 0 ? supports(a) || accounts.length === 1 : supports(a)).map((a) => forcedHop(a, model, internals.get(a.name) ?? row?.internal_id));
       const first = accounts[0];
       if (!first) throw new Error("Fornecedor dedicado indisponível");
       return { chain: chain.length ? chain : [forcedHop(first, model, row?.internal_id)] };
@@ -202,7 +207,7 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
       return { chain: [{ account, upstreamModel: tier }] };
     }
 
-    return { chain: globalProviderHops(list, model, row?.provider, upstreamModel) };
+    return { chain: globalProviderHops(list, model, row?.provider, upstreamModel, internals) };
   } catch (error) {
     if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model)) throw error;
     return { chain: [{ account: DEFAULT, upstreamModel: model }] };

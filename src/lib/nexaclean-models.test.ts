@@ -22,3 +22,13 @@ test("pedido de Claude nunca é trocado por Nexaclean", () => {
   expect(pickKeyModel("modelo-qualquer", names, matchModelName("modelo-qualquer", names))?.model.startsWith("nexaclean")).toBe(false);
   expect(pickKeyModel("nexaclean-pro", names, matchModelName("nexaclean-pro", names))?.model).toBe("nexaclean-pro");
 });
+
+import { globalProviderHops } from "./upstream.server";
+
+test("mesmo nome em dois fornecedores usa o modelo interno de cada um", () => {
+  const a = { name: "Fornecedor A", base_url: "https://a/v1", api_secret_name: "A", available_models: ["modelo-a"] };
+  const b = { name: "Fornecedor B", base_url: "https://b/v1", api_secret_name: "B", available_models: ["modelo-b"] };
+  const internals = new Map<string, string | null>([["Fornecedor A", "modelo-a"], ["Fornecedor B", "modelo-b"]]);
+  const hops = globalProviderHops([a, b], "meu-modelo", undefined, undefined, internals);
+  expect(hops.map((h) => h.upstreamModel)).toEqual(["modelo-a", "modelo-b"]);
+});
