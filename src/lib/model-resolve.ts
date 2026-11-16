@@ -23,13 +23,14 @@ export function resolveModel(asked: string, enabled: string[]): string | undefin
 // dentro da lista já filtrada pelo plano, para nunca chamar um modelo fora do plano.
 import { planExclusiveModel } from "./plan-exclusive-models";
 import { nexacleanModel } from "./nexaclean-models";
+import { isComboName } from "./model-combos";
 
 export function pickKeyModel(asked: string, names: string[], exact?: string): { model: string; substituted: boolean } | undefined {
   if (exact) return { model: exact, substituted: false };
   const usable = names.filter((n) => !n.startsWith("codecraft-"));
   // Never silently swap a request onto a plan-exclusive model (e.g. DeepSeek) unless it is all the key has.
   // Nexaclean (Free.ai) também: só atende quem pede o nome dele exatamente.
-  const regular = usable.filter((n) => !planExclusiveModel(n) && !nexacleanModel(n));
+  const regular = usable.filter((n) => !planExclusiveModel(n) && !nexacleanModel(n) && !isComboName(n));
   const model = resolveModel(asked, regular.length ? regular : usable);
   return model ? { model, substituted: true } : undefined;
 }

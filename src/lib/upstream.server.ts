@@ -1,6 +1,7 @@
 import { FREE_AI_PROVIDER, rebrandResponse, withNexaIdentity } from "./free-ai-identity";
 import { planExclusiveProvider } from "./plan-exclusive-models";
 import { nexacleanModel, NEXACLEAN_PROVIDER, NEXACLEAN_UPSTREAM } from "./nexaclean-models";
+import { comboOrder, isComboName, nextComboTurn, type ComboStrategy } from "./model-combos";
 import { anthropicRevendaCombo as revendaCombo, tokensTokenCombo } from './provider-catalog';
 const anthropicRevendaCombo = (a: { name: string; available_models?: string[] | null }, m: string) => revendaCombo(a, m) ?? tokensTokenCombo(a, m);
 import { INVISION_MODEL_ALIASES } from './invision-models';
@@ -172,6 +173,21 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
       return { chain: [{ account, upstreamModel: ASTRA_TARGET }] };
     }
 
+    // Combo da Nexa: tenta os itens do combo (fornecedor + modelo), em ordem ou em rodízio.
+    if (isComboName(model)) {
+      const { data: combo } = await (supabaseAdmin as any).from("model_combos")
+        .select("strategy, enabled, model_combo_items(position, provider, model)").eq("name", model.toLowerCase()).maybeSingle();
+      if (combo) {
+        if (!combo.enabled) throw new Error("Combo desativado");
+        const items = ((combo.model_combo_items ?? []) as { position: number; provider: string; model: string }[]).sort((a, b) => a.position - b.position);
+        const chain = comboOrder(items, combo.strategy as ComboStrategy, nextComboTurn(model))
+          .map((item) => ({ account: all.find((a) => a.name === item.provider), upstreamModel: item.model }))
+          .filter((hop): hop is Hop => Boolean(hop.account));
+        if (!chain.length) throw new Error("Nenhum fornecedor do combo está ativo");
+        return { chain };
+      }
+    }
+
     // Nexaclean vai só para o Free.ai, com ou sem cadeia dedicada na chave.
     if (nexacleanModel(model)) {
       const owner = all.find((a) => a.name === NEXACLEAN_PROVIDER);
@@ -209,7 +225,7 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
 
     return { chain: globalProviderHops(list, model, row?.provider, upstreamModel, internals) };
   } catch (error) {
-    if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model)) throw error;
+    if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model) || isComboName(model)) throw error;
     return { chain: [{ account: DEFAULT, upstreamModel: model }] };
   }
 }
@@ -397,7 +413,10 @@ export async function fetchUpstream(body: unknown, signal?: AbortSignal, forcedP
   const model = String((body as { model?: unknown })?.model ?? "");
   const route = await resolveRoute(model, forcedProvider);
   const chain = expandDevhubCombos(route.chain, model);
-  const usable = chain.filter((hop) => accountKeys(hop.account.api_secret_name).length);
+  // Fornecedor só entra na fila se tiver chave: no arquivo de configuração ou cadastrada pelo painel.
+  const { providerSecret } = await import("./provider-secrets.server");
+  const hasKey = await Promise.all(chain.map(async (hop) => accountKeys(hop.account.api_secret_name).length > 0 || Boolean(await providerSecret(hop.account.api_secret_name))));
+  const usable = chain.filter((_, i) => hasKey[i]);
   // Quem falhou recentemente neste modelo vai para o fim da fila; o próximo pedido já começa no seguinte.
   const [cooled, exhausted] = await Promise.all([cooledHops(usable), usable.length ? windowExhausted() : Promise.resolve(new Set<string>())]);
   const paused = new Set(usable.filter(hop => exhausted.has(hop.account.name) || cooled.has(cooldownKey(hop.account.name, PROVIDER_QUOTA_MODEL))).map(hop => hop.account.name));
@@ -413,7 +432,8 @@ export async function fetchUpstream(body: unknown, signal?: AbortSignal, forcedP
     // Combo models rest only briefly, so one short supplier blip never moves the principal behind its backup for long.
     const coolInner = (status: number) => coolDown(account.name, upstreamModel, status, Date.now() + (hop.combo ? COMBO_COOLDOWN_MS : COOLDOWN_MS));
     const started = Date.now();
-    const sanitize = (text: string) => sanitizeProviderCause(text, [...accountKeys(account.api_secret_name).map((key) => key.value), process.env['NEXA_PROXY_ACCESS_TOKEN'] || '', process.env['LOVABLE_API_KEY'] || '']);
+    const panelKey = await providerSecret(account.api_secret_name);
+    const sanitize = (text: string) => sanitizeProviderCause(text, [...accountKeys(account.api_secret_name).map((key) => key.value), panelKey || '', process.env['NEXA_PROXY_ACCESS_TOKEN'] || '', process.env['LOVABLE_API_KEY'] || '']);
     try {
       let attempt = await tryAccount(account, upstreamModel, body, signal);
       // HTTP 200 followed only by an SSE error is a failure while nothing reached the client yet.

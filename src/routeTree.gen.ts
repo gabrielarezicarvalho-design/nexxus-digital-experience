@@ -36,6 +36,8 @@ import { Route as AdminKeysRouteImport } from './routes/admin/keys'
 import { Route as AdminLogsRouteImport } from './routes/admin/logs'
 import { Route as AdminMetricasRouteImport } from './routes/admin/metricas'
 import { Route as AdminModelosRouteImport } from './routes/admin/modelos'
+import { Route as AdminCombosRouteImport } from './routes/admin/combos'
+import { Route as AdminChamadasRouteImport } from './routes/admin/chamadas'
 import { Route as AdminPlanosRouteImport } from './routes/admin/planos'
 import { Route as AdminRevendaRouteImport } from './routes/admin/revenda'
 import { Route as ApiAssistenteRouteImport } from './routes/api/assistente'
@@ -190,6 +192,16 @@ const AdminModelosRoute = AdminModelosRouteImport.update({
   path: '/modelos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCombosRoute = AdminCombosRouteImport.update({
+  id: '/combos',
+  path: '/combos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminChamadasRoute = AdminChamadasRouteImport.update({
+  id: '/chamadas',
+  path: '/chamadas',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPlanosRoute = AdminPlanosRouteImport.update({
   id: '/planos',
   path: '/planos',
@@ -313,6 +325,8 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/metricas': typeof AdminMetricasRoute
   '/admin/modelos': typeof AdminModelosRoute
+  '/admin/combos': typeof AdminCombosRoute
+  '/admin/chamadas': typeof AdminChamadasRoute
   '/admin/planos': typeof AdminPlanosRoute
   '/admin/revenda': typeof AdminRevendaRoute
   '/api/assistente': typeof ApiAssistenteRoute
@@ -359,6 +373,8 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/metricas': typeof AdminMetricasRoute
   '/admin/modelos': typeof AdminModelosRoute
+  '/admin/combos': typeof AdminCombosRoute
+  '/admin/chamadas': typeof AdminChamadasRoute
   '/admin/planos': typeof AdminPlanosRoute
   '/admin/revenda': typeof AdminRevendaRoute
   '/api/assistente': typeof ApiAssistenteRoute
@@ -407,6 +423,8 @@ export interface FileRoutesById {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/metricas': typeof AdminMetricasRoute
   '/admin/modelos': typeof AdminModelosRoute
+  '/admin/combos': typeof AdminCombosRoute
+  '/admin/chamadas': typeof AdminChamadasRoute
   '/admin/planos': typeof AdminPlanosRoute
   '/admin/revenda': typeof AdminRevendaRoute
   '/api/assistente': typeof ApiAssistenteRoute
@@ -456,6 +474,8 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/metricas'
     | '/admin/modelos'
+    | '/admin/combos'
+    | '/admin/chamadas'
     | '/admin/planos'
     | '/admin/revenda'
     | '/api/assistente'
@@ -502,6 +522,8 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/metricas'
     | '/admin/modelos'
+    | '/admin/combos'
+    | '/admin/chamadas'
     | '/admin/planos'
     | '/admin/revenda'
     | '/api/assistente'
@@ -549,6 +571,8 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/metricas'
     | '/admin/modelos'
+    | '/admin/combos'
+    | '/admin/chamadas'
     | '/admin/planos'
     | '/admin/revenda'
     | '/api/assistente'
@@ -791,6 +815,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminModelosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/combos': {
+      id: '/admin/combos'
+      path: '/combos'
+      fullPath: '/admin/combos'
+      preLoaderRoute: typeof AdminCombosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/chamadas': {
+      id: '/admin/chamadas'
+      path: '/chamadas'
+      fullPath: '/admin/chamadas'
+      preLoaderRoute: typeof AdminChamadasRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/planos': {
       id: '/admin/planos'
       path: '/planos'
@@ -934,6 +972,8 @@ interface AdminRouteChildren {
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMetricasRoute: typeof AdminMetricasRoute
   AdminModelosRoute: typeof AdminModelosRoute
+  AdminCombosRoute: typeof AdminCombosRoute
+  AdminChamadasRoute: typeof AdminChamadasRoute
   AdminPlanosRoute: typeof AdminPlanosRoute
   AdminRevendaRoute: typeof AdminRevendaRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -953,6 +993,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLogsRoute: AdminLogsRoute,
   AdminMetricasRoute: AdminMetricasRoute,
   AdminModelosRoute: AdminModelosRoute,
+  AdminCombosRoute: AdminCombosRoute,
+  AdminChamadasRoute: AdminChamadasRoute,
   AdminPlanosRoute: AdminPlanosRoute,
   AdminRevendaRoute: AdminRevendaRoute,
   AdminIndexRoute: AdminIndexRoute,

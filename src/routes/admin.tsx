@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, Users, Package, Cpu, ScrollText, ShieldCheck, Settings, LogOut, Server, DatabaseZap, UserCog, Store, PanelLeftClose, PanelLeftOpen, Menu, X, ChartNoAxesCombined, Wallet, Ticket } from "lucide-react";
+import { LayoutDashboard, Users, Package, Cpu, ScrollText, ShieldCheck, Settings, LogOut, Server, DatabaseZap, UserCog, Store, PanelLeftClose, PanelLeftOpen, Menu, X, ChartNoAxesCombined, Wallet, Ticket, Layers, Activity } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAdminAccess, recordAdminAccess } from "@/lib/admin-access.functions";
@@ -42,6 +42,8 @@ const MENU = [
   { to: "/admin/cupons", label: "Cupons", icon: Ticket },
   { to: "/admin/modelos", label: "Modelos", icon: Cpu },
   { to: "/admin/fornecedores", label: "Fornecedores", icon: DatabaseZap },
+  { to: "/admin/combos", label: "Combos", icon: Layers },
+  { to: "/admin/chamadas", label: "Chamadas", icon: Activity },
   { to: "/admin/logs", label: "Uso / Logs", icon: ScrollText },
   { to: "/admin/infraestrutura", label: "Infraestrutura", icon: Server },
   { to: "/admin/auditoria", label: "Auditoria", icon: ShieldCheck },
