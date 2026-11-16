@@ -1,17 +1,21 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { providerProxyHeaders } from "./provider-transport.server";
 
-export const WIDGET_PROVIDER = "Anthropic Revenda";
-export const WIDGET_MODEL = "claude-sonnet-5";
+// Gabriel, 15/11/2026: the support chat answers with the same supplier as the gateway (DevHub),
+// using the fastest DevHub Claude model available (measured order), never the 9Router pool.
+export const WIDGET_PROVIDER = "DevHub Brasil";
+export const WIDGET_MODELS = ["claude-fable-5.1", "claude-opus-5.5", "claude-sonnet-5", "claude-opus-5"];
+export const WIDGET_MODEL = WIDGET_MODELS[0];
 
 type WidgetAccount = { name: string; active: boolean; paused: boolean; base_url: string; api_secret_name: string; available_models: string[] | null };
 
 export function widgetAccount(accounts: WidgetAccount[]) {
   const account = accounts.find((row) => row.name === WIDGET_PROVIDER && row.active && !row.paused);
-  if (!account || !account.available_models?.includes(WIDGET_MODEL)) {
+  const model = WIDGET_MODELS.find((m) => account?.available_models?.includes(m));
+  if (!account || !model) {
     throw new Error("Atendimento temporariamente indisponível. Fale com o suporte pelo WhatsApp.");
   }
-  return account;
+  return Object.assign(account, { widgetModel: model });
 }
 
 // Only called after the assistant endpoint has authenticated the user and checked thread ownership.
@@ -35,5 +39,5 @@ export async function widgetLanguageModel() {
       return response;
     },
   });
-  return provider.chat(WIDGET_MODEL);
+  return provider.chat(account.widgetModel);
 }
