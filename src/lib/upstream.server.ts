@@ -223,6 +223,13 @@ async function resolveRoute(model: string, forcedProvider?: string | null): Prom
       return { chain: [{ account, upstreamModel: tier }] };
     }
 
+    // Nome do catálogo que só existe em fornecedor fora da fila comum (ex.: Free.ai): vai direto para ele.
+    const commonOwner = rows.some((r) => list.some((a) => a.name === r.provider));
+    const dedicatedOwners = rows.map((r) => ({ r, account: all.find((a) => a.name === r.provider && isDedicatedOnly(a)) })).filter((x) => x.account);
+    if (!commonOwner && dedicatedOwners.length) {
+      return { chain: dedicatedOwners.map(({ r, account }) => ({ account: account!, upstreamModel: r.internal_id || model })) };
+    }
+
     return { chain: globalProviderHops(list, model, row?.provider, upstreamModel, internals) };
   } catch (error) {
     if (model === ASTRA_ALIAS || isSubtoapiTier(model) || forcedProvider || nexacleanModel(model) || isComboName(model)) throw error;
