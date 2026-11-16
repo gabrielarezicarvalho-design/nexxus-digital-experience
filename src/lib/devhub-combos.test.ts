@@ -6,8 +6,8 @@ const devhubModels = ['devhub-chat', 'gemma-2-2b', 'claude-opus-5.5', 'claude-so
 const devhub = { name: 'DevHub Brasil', base_url: 'https://api.devhubbrasil.com/v1', api_secret_name: 'TEST', available_models: devhubModels };
 const anthropic = { name: 'Anthropic Revenda', base_url: 'https://provider.test', api_secret_name: 'TEST', available_models: ['claude-opus-5-5'] };
 
-test('the six requested combos exist', () => {
-  expect([...DEVHUB_COMBOS].sort()).toEqual(['claude-fable-5-1', 'claude-fable-5-2', 'claude-haiku-5-5', 'claude-opus-4-8', 'claude-opus-5-5', 'claude-sonnet-5-5']);
+test('the requested combos exist (opus-5, sonnet-5 and fable-5 added on 15/11/2026)', () => {
+  expect([...DEVHUB_COMBOS].sort()).toEqual(['claude-fable-5', 'claude-fable-5-1', 'claude-fable-5-2', 'claude-haiku-5-5', 'claude-opus-4-8', 'claude-opus-5', 'claude-opus-5-5', 'claude-sonnet-5', 'claude-sonnet-5-5']);
 });
 
 const claudeOnly = devhubModels.filter(m => m.startsWith('claude-'));
@@ -58,4 +58,10 @@ test("Haiku (absent on the DevHub) tries the fastest measured Claude models firs
   const dh = { name: "DevHub Brasil", available_models: ["claude-sonnet-5", "claude-sonnet-5.5", "claude-opus-4.8", "claude-opus-5", "claude-opus-5.5", "claude-fable-5.1"] };
   expect(devhubComboModels(dh, "claude-haiku-5-5")?.slice(0, 4)).toEqual(["claude-fable-5.1", "claude-opus-5.5", "claude-sonnet-5", "claude-opus-5"]);
   expect(devhubComboModels(dh, "claude-opus-5-5")?.[0]).toBe("claude-opus-5.5");
+});
+
+test("claude-opus-5 and claude-sonnet-5.5 fall back to other DevHub Claude models when they fail", () => {
+  const dh = { name: "DevHub Brasil", available_models: ["claude-sonnet-5", "claude-sonnet-5.5", "claude-opus-5", "claude-opus-5.5", "claude-fable-5.1"] };
+  expect(devhubComboModels(dh, "claude-opus-5")).toEqual(["claude-opus-5", "claude-fable-5.1", "claude-opus-5.5", "claude-sonnet-5", "claude-sonnet-5.5"]);
+  expect(devhubComboModels(dh, "claude-sonnet-5-5")).toEqual(["claude-sonnet-5.5", "claude-fable-5.1", "claude-opus-5.5", "claude-sonnet-5", "claude-opus-5"]);
 });
