@@ -41,7 +41,7 @@ test("clientes comuns nunca usam a FreeAPI", () => {
   const reserva = { ...free, name: "Reserva Teste", available_models: ["claude-sonnet-5"] };
   const anthropic = { ...free, name: "Anthropic Revenda", available_models: ["claude-sonnet-5-5"] };
   const hops = globalProviderHops([reserva, anthropic, free], "claude-sonnet-5");
-  expect(hops.map(hop => hop.account.name)).toEqual(["Reserva Teste"]); // Anthropic Revenda não atende Claude na rota comum
+  expect(hops.map(hop => hop.account.name)).toEqual(["Reserva Teste", "Anthropic Revenda"]);
 });
 
 test("uma cadeia dedicada com FreeAPI também usa o slot sem mudar sua posição", () => {

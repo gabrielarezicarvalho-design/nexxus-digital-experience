@@ -1,4 +1,5 @@
 import { blockedKeyMessage, IP_LIMIT_BLOCK_MESSAGE } from "@/lib/key-block-message";
+import { reserveLabel } from "@/lib/devhub-combos";
 import { cancelAware } from "@/lib/client-cancel";
 import { billedUsage } from "./cache-billing";
 import { keyBurstLimit, keyBurstMessage } from '@/lib/monthly-burst';
@@ -146,7 +147,8 @@ export async function handleChatCompletions(request: Request, adapter?: ChatComp
     upstream = routed.res;
     upstreamModel = routed.upstreamModel;
     // The outage combo is labelled with its own name, never as the Claude/GPT model that was asked for.
-    responseModel = upstreamModel === OUTAGE_COMBO ? OUTAGE_COMBO : model;
+    // A Claude request answered by the 9Router reserve is labelled as a non-Claude reserve (Gabriel, 15/11/2026).
+    responseModel = upstreamModel === OUTAGE_COMBO ? OUTAGE_COMBO : reserveLabel(routed.provider, model) ?? model;
     onUsage = routed.onUsage;
     provider = routed.provider;
   } catch (e) {

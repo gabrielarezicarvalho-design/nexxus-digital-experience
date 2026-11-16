@@ -180,7 +180,7 @@ test('Ghost Opus and Fable fail over to reserves under equivalent names, public 
   savedNames.forEach((name) => { process.env[name] = 'test-only'; });
   providers.unshift(
     { name: 'GhostCLI', base_url: 'https://ghost.test/v1', api_secret_name: 'TEST_PRIMARY', available_models: ['claude-opus-5-5', 'claude-fable-5.1'] },
-    { name: 'Reserva Teste', base_url: 'https://revenda.test/v1', api_secret_name: 'TEST_RESERVE', available_models: ['claude-opus-5', 'claude-fable-5', 'claude-sonnet-5'] },
+    { name: 'Anthropic Revenda', base_url: 'https://revenda.test/v1', api_secret_name: 'TEST_RESERVE', available_models: ['claude-opus-5', 'claude-fable-5', 'claude-sonnet-5'] },
   );
   ghostOwner = true;
   const sent: { url: string; model: string }[] = [];
@@ -201,7 +201,7 @@ test('Ghost Opus and Fable fail over to reserves under equivalent names, public 
       const failures: import('./upstream-diagnostics').ProviderFailure[] = [];
       const upstream = await fetchUpstream({ model: publicModel }, undefined, null, failures);
       expect(upstream.res.status).toBe(200);
-      expect(upstream.provider).toBe('Reserva Teste');
+      expect(upstream.provider).toBe('Anthropic Revenda');
       expect(sent).toEqual([
         { url: 'https://ghost.test/v1/chat/completions', model: ghostModel },
         { url: 'https://revenda.test/v1/chat/completions', model: reserveModel },

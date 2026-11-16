@@ -33,14 +33,17 @@ export function devhubComboModels(account: { name: string; available_models?: st
   return [...same, ...preferred, ...list.filter((m) => !same.includes(m) && !preferred.includes(m))];
 }
 
-// 9Router (Anthropic Revenda) is only the reserve for families the DevHub does not sell (GPT, Gemini…).
-// Gabriel, 15/11/2026: Claude never falls back to it, so a Claude request is never answered by another model.
+// 9Router (Anthropic Revenda) is the reserve behind the DevHub. Gabriel, 15/11/2026: when it answers a Claude
+// request, the answer is labelled RESERVE_LABEL, never with the Claude name, because its pool is not Claude.
 export const NON_CLAUDE_RESERVE_PROVIDER = "Anthropic Revenda";
+export const RESERVE_LABEL = "reserva-nao-claude";
 
-/** Claude goes only to the DevHub; GPT and other families go only to the 9Router reserve. */
+/** Claude goes to the DevHub first and only then to the 9Router reserve; GPT and other families only to the 9Router. */
 export function devhubServesInCommonLine(account: { name: string }, model: string): boolean {
-  const claude = /^claude-/i.test(model.trim());
-  if (account.name === DEVHUB_PROVIDER) return claude;
-  if (account.name === NON_CLAUDE_RESERVE_PROVIDER) return !claude;
-  return true;
+  return account.name !== DEVHUB_PROVIDER || /^claude-/i.test(model.trim());
+}
+
+/** Public model name for an answer: a Claude request answered by the 9Router reserve shows RESERVE_LABEL. */
+export function reserveLabel(provider: string | null | undefined, requestedModel: string): string | null {
+  return provider === NON_CLAUDE_RESERVE_PROVIDER && /^claude-/i.test(requestedModel.trim()) ? RESERVE_LABEL : null;
 }

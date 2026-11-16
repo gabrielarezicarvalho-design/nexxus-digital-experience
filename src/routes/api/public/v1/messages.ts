@@ -1,4 +1,5 @@
 import { blockedKeyMessage, IP_LIMIT_BLOCK_MESSAGE } from "@/lib/key-block-message";
+import { reserveLabel } from "@/lib/devhub-combos";
 import { cancelAware } from "@/lib/client-cancel";
 import { anthropicUsage, billedUsage } from "@/lib/cache-billing";
 import { checkKeyRpm, rpmRefusal } from "@/lib/mass-agent-guard";
@@ -210,7 +211,7 @@ export const Route = createFileRoute("/api/public/v1/messages")({
         let provider: string | null = null;
         let responseModel = picked.substituted ? model : asked || model;
         let notice: string | null = null;
-        void upstreamP.then((r) => { provider = r.provider; if (r.upstreamModel === OUTAGE_COMBO) responseModel = OUTAGE_COMBO; }).catch(() => {});
+        void upstreamP.then((r) => { provider = r.provider; if (r.upstreamModel === OUTAGE_COMBO) responseModel = OUTAGE_COMBO; else responseModel = reserveLabel(r.provider, model) ?? responseModel; }).catch(() => {});
 
         const finish = async (u: Parameters<typeof billedUsage>[0], status: number, error?: string) => {
           // Cache lido conta só uma fração no consumo da chave (cache-billing); o fornecedor recebe o uso bruto.
