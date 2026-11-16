@@ -6,6 +6,7 @@ import { filterPlanModels } from './plan-models';
 import { asFamily } from './model-family';
 import { keyProvider } from './key-provider';
 import { apiModelList } from './api-model-list';
+import { hidesClaudeNames } from './devhub-combos';
 import { ASTRA_ALIAS, astraAliasAvailable } from './astra-alias';
 
 // Dashboard API instructions use the same key restrictions as generation.
@@ -36,7 +37,8 @@ async function providerModelNames(db: SupabaseClient<Database>, forcedProvider?:
     if (error) throw new Error('Não foi possível carregar os modelos disponíveis.');
     // Chave fixa no fornecedor: todos os modelos dele, a lista do fornecedor mais os nomes do catálogo ligados a ele.
     const { data: catalogRows } = await db.from('models').select('name').eq('provider', forcedProvider).eq('enabled', true).eq('catalog_approved', true);
-    const names = [...new Set([...(data?.available_models ?? []), ...((catalogRows ?? []) as { name: string }[]).map(r => r.name)])];
+    const names = [...new Set([...(data?.available_models ?? []), ...((catalogRows ?? []) as { name: string }[]).map(r => r.name)])]
+      .filter(name => !(hidesClaudeNames(forcedProvider) && /^claude-/i.test(name)));
     if (astraAliasAvailable(forcedProvider, names)) names.push(ASTRA_ALIAS);
     if (forcedProvider === 'Invision') return invisionPublicModels(names);
     if (forcedProvider === 'FreeModel' && clientId) {

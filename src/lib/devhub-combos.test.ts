@@ -71,3 +71,9 @@ test("a Claude answer from the 9Router reserve is labelled as a non-Claude reser
   expect(reserveLabel("DevHub Brasil", "claude-opus-5-5")).toBeNull();
   expect(reserveLabel("Anthropic Revenda", "gpt-6-sol")).toBeNull();
 });
+
+test("Free.ai respondendo um pedido de Claude sai com o nome real do Qwen", () => {
+  expect(reserveLabel("Free.ai", "claude-opus-4-8")).toBe("qwen-coder");
+  expect(reserveLabel("Free.ai", "nexaclean-pro")).toBeNull();
+  expect(reserveLabel("DevHub Brasil", "claude-opus-4-8")).toBeNull();
+});

@@ -137,3 +137,8 @@ test('chave fixa num fornecedor recebe todos os modelos dele, inclusive os nomes
   const { db } = mockDb('x@y.com', ['qwen-coder', 'qwen7b'], [], ['nexaclean-pro', 'qwen-coder']);
   expect(await clientModelNames(db, 'Free.ai', null, 'combo')).toEqual(['qwen-coder', 'qwen7b', 'nexaclean-pro']);
 });
+
+test('chave fixa no Free.ai nunca lista nomes de Claude, mesmo cadastrados no catálogo dele', async () => {
+  const { db } = mockDb('x@y.com', ['qwen-coder', 'qwen7b'], [], ['claude-opus-4-8', 'nexaclean-pro']);
+  expect(await clientModelNames(db, 'Free.ai', null, 'combo')).toEqual(['qwen-coder', 'qwen7b', 'nexaclean-pro']);
+});

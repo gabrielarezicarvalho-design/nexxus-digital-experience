@@ -44,6 +44,15 @@ export function devhubServesInCommonLine(account: { name: string }, model: strin
 }
 
 /** Public model name for an answer: a Claude request answered by the 9Router reserve shows RESERVE_LABEL. */
+// Fornecedores que não entregam Claude: um pedido com nome de Claude respondido por eles sai com este rótulo.
+export const NON_CLAUDE_LABELS: Record<string, string> = {
+  [NON_CLAUDE_RESERVE_PROVIDER]: RESERVE_LABEL,
+  "Free.ai": "qwen-coder",
+};
 export function reserveLabel(provider: string | null | undefined, requestedModel: string): string | null {
-  return provider === NON_CLAUDE_RESERVE_PROVIDER && /^claude-/i.test(requestedModel.trim()) ? RESERVE_LABEL : null;
+  return provider && /^claude-/i.test(requestedModel.trim()) ? NON_CLAUDE_LABELS[provider] ?? null : null;
+}
+/** Free.ai (Qwen) nunca lista nomes de Claude para chaves fixas nele, mesmo que o catálogo tenha esses nomes. */
+export function hidesClaudeNames(provider: string): boolean {
+  return provider === "Free.ai";
 }
