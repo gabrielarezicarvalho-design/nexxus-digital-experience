@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTitle, Panel, fmt } from "@/lib/admin-ui";
 import { pageHead } from "@/lib/page-head";
+import { ProviderFlowMap, type FlowActivity } from "@/components/ProviderFlowMap";
 
 export const Route = createFileRoute("/admin/chamadas")({ head: () => pageHead("Chamadas", "Chamadas aos fornecedores em tempo real."), component: Chamadas });
 
@@ -35,6 +36,27 @@ function Chamadas() {
     return (data ?? []) as unknown as Call[];
   } });
 
+  const accounts = useQuery({ queryKey: ["admin-flow-providers"], refetchInterval: 60000, queryFn: async () => {
+    const { data, error } = await supabase.from("provider_accounts").select("name, active, paused").order("priority");
+    if (error) throw error;
+    return ((data ?? []) as { name: string; active: boolean; paused: boolean }[]).map((p) => ({ name: p.name, active: p.active && !p.paused }));
+  } });
+  // Chamadas do último minuto acendem a linha do fornecedor (vem da lista ao vivo, sem filtro de fornecedor).
+  const recent = useQuery({ queryKey: ["admin-flow-recent"], refetchInterval: 3000, queryFn: async () => {
+    const since = new Date(Date.now() - 60_000).toISOString();
+    const { data, error } = await supabase.from("request_logs").select("provider, status_code, created_at").gte("created_at", since).limit(500);
+    if (error) throw error;
+    return (data ?? []) as { provider: string | null; status_code: number; created_at: string }[];
+  } });
+  const activity: FlowActivity[] = Object.values((recent.data ?? []).reduce<Record<string, FlowActivity>>((acc, r) => {
+    if (!r.provider) return acc;
+    const a = (acc[r.provider] ??= { provider: r.provider, calls: 0, errors: 0, lastAt: 0 });
+    a.calls += 1;
+    if (r.status_code >= 400 && r.status_code !== 499) a.errors += 1;
+    a.lastAt = Math.max(a.lastAt, new Date(r.created_at).getTime());
+    return acc;
+  }, {}));
+
   const rows = stats.data ?? [];
   const total = rows.reduce((a, r) => ({ requests: a.requests + r.requests, input: a.input + r.prompt_tokens, cached: a.cached + r.cached_tokens, output: a.output + r.completion_tokens, errors: a.errors + r.errors }), { requests: 0, input: 0, cached: 0, output: 0, errors: 0 });
   const max = Math.max(1, ...rows.map((r) => r.requests));
@@ -61,6 +83,11 @@ function Chamadas() {
           </Panel>
         ))}
       </div>
+
+      <Panel className="mb-6 p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Ao vivo</h2><span className="text-xs text-muted-foreground">linha acesa = fornecedor chamado no último minuto · laranja = só erros</span></div>
+        <ProviderFlowMap providers={accounts.data ?? []} activity={activity} selected={provider} onSelect={(name) => setProvider(provider === name ? "" : name)} />
+      </Panel>
 
       <Panel className="mb-6 p-4">
         <h2 className="mb-3 font-semibold">Por fornecedor</h2>
